@@ -19,7 +19,6 @@
   const urlConexionCatalogos =  url+'Probosque/CargaInicial';
   const urlConexionPredios =   url+'Probosque/Predios';
   const urlConexionMultiRegistro =   url+'Probosque/MultiRegistro';
-  const urlConexionMultiRegistros =   url+'Probosque/Multiregistros';
   const urlConexionService =  url+'ServiceBosque/AuditoriasPreventivas';
 
 
@@ -449,15 +448,21 @@ panelFicha.on('click', '.btn-reset', function(){
 });
 
 panelFicha.on('click', '.multiregistro', function() {
+
     let opcion = $(this).attr('data-multi');
     let btnAgregar = $('#addOptionMultiRegistro');
-    btnAgregar.attr('data-option','');
+    btnAgregar.attr('data-option', '');
+
     if (multiregistroBandera) {
+
         let clavePredio = $(this).attr('data-info');
-        btnAgregar.attr('data-option',opcion);
+        btnAgregar.attr('data-option', opcion);
         opcion == 'propietario' ? getPredioRepresentantes(urlConexionMultiRegistro, clavePredio) : (opcion == 'poligono') ? getPredioPoligonos(urlConexionMultiRegistro, clavePredio) : getPredioImagen(urlConexionMultiRegistro, clavePredio);
+    
     } else {
-        alertaInfo('','<p>Para agregar multiregistros de '+ opcion +' guarde primero la ficha de predio. Haciendo <b>clic</b> en el boton <b>Agregar predio</b></p>','Información') 
+
+        alertaInfo('', '<p>Para agregar multiregistros de ' + opcion + ' guarde primero la ficha de predio. Haciendo <b>clic</b> en el boton <b>Agregar predio</b></p>', 'Información')
+    
     }
 });
 
@@ -564,6 +569,8 @@ addOptionMultiRegistro.on('click', function() {
     let opcion = $(this).attr('data-option');
     if (opcion == 'propietario') {
         mostrarDetallePropietario(this);
+    }else if(opcion == 'poligono'){
+       mostrarDetallePoligono(this);
     }
 });
 
@@ -774,6 +781,7 @@ function agregaCalendario(element, drops='up') {
         singleDatePicker: true,
         autoUpdateInput: false,
         showDropdowns: true,
+
         drops: drops,
         locale: {
             format: "DD/MM/YYYY",
@@ -865,17 +873,19 @@ function plantillaPoligonos(arr){
     arregloDePoligonos = arr.slice();
     
     let renglones = '';
-    let renglon = `<tr data-consecutivo=":consecutivo:" onmouseover="this.style.cursor='pointer'" onclick="mostrarDetallePoligono(this)">
+    let renglon = `<tr class="renglon:consecutivo:">
                      <td>:consecutivo:</td>
                      <td>:folio:</td>
                      <td>:accion_agraria:</td>
+                     <td><button type="button" class="btn btn-success" data-action="update" data-consecutivo=":consecutivo:" onclick="mostrarDetallePoligono(this)">Actualizar</button></td>
+                     <td><button type="button" class="btn btn-default" data-consecutivo=":consecutivo:" data-folio=":folio:" data-info="Poligono" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
                   </tr>`;
 
     arr.forEach(function(value){
-        renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(':folio:',value.folio).replace(':accion_agraria:',value.accion_agraria);
+        renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(/:folio:/g,value.folio).replace(':accion_agraria:',value.accion_agraria);
     });
 
-    renglones= (renglones == '')? `<tr><td colspan="3"><center>No hay datos registrados</center></td></tr>`: renglones;
+    renglones= (renglones == '')? `<tr><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
     let html = `<div class="table-responsive table-striped table-bordered table-hover">
                     <table class="table">
                         <thead>
@@ -883,9 +893,11 @@ function plantillaPoligonos(arr){
                             <th>Consecutivo</th>
                             <th>Folio</th>
                             <th>Acción agraría</th>
+                            <th>Actualizar</th>
+                            <th>Eliminar</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbodyTablaPoligono">
                             ${renglones}
                         </tbody>
                     </table>
@@ -905,8 +917,13 @@ function mostrarDetallePoligono(element){
     tituloModal.html('Poligonos');
     flechaRegreso.attr('data-option', 'detalleMultiRegistro');
     flechaRegreso.show();
+    addOptionMultiRegistro.hide();    
     multiRegistros.hide();
     detalleMultiRegistro.show();
+    agregaCalendario('.fechaPublicacionDof','down');
+    agregaCalendario('.fechaResolucionPresidencial');
+    agregaCalendario('.fechaAsambleaProcede');
+    validaFormularioPoligono('#formularioPoligono');
 }
 
 /**
@@ -915,216 +932,242 @@ function mostrarDetallePoligono(element){
  * @return  {String} Retorno el formulario lleno con los detalles
  */
 function plantillaDetallePoligono(element){
-
-    let consecutivo = $(element).attr('data-consecutivo');
+    let option = $(element).attr('data-action');
+    let valueFolio =  ''; 
+    let botones = '';
+    let display = '';
     
-    let posicion = arrayObjectIndexOf(this,consecutivo,'consecutivo');
+    self = '';
+    
+    if(option == 'agregar'){
+
+        botones = '<button type="submit" id="agregarMultiPoligono" class="btn btn-success">Agregar multiregistro</button>';
+        display= 'style="display:none"';
+        valueFolio = $(element).attr('data-info');
+
+    }else if(option == 'update'){
+        botones = '<button type="submit" id="actualizarMultiPoligono" class="btn btn-success">Actualizar</button>';
+
+        let consecutivo = parseInt($(element).attr('data-consecutivo'));
+    
+        let posicion = arrayObjectIndexOf(this,consecutivo,'consecutivo');
+
+        (posicion > -1)? self = this[posicion] : '';
+        (posicion > -1)? valueFolio =  self.folio : valueFolio='';
+    }
+
     
     
-    let formulario =`<div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Consecutivo</label>
-                                <input type="text" class="form-control" value="${this[posicion].consecutivo}" readonly>
-                            </div>
+    let formulario =`<form id="formularioPoligono" onsubmit="return false" autocomplete="off">
+                        <div class="form-group" ${display}>
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Consecutivo</label>
+                                    <input type="text" class="form-control" name="consecutivo" value="${getTexto(self.consecutivo)}" readonly>
+                                </div>
 
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Folio</label>
-                                <input type="text" class="form-control" value="${this[posicion].folio}" readonly>
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Folio</label>
+                                    <input type="text" class="form-control" name="folio" value="${getTexto(self.folio)}" readonly>
+                                </div>
+                            </div>
+                        </div> 
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Acción agraria</label>
+                                    <input type="text" class="form-control" name="accionAgraria" value="${getTexto(self.accion_agraria)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Fecha de publicación en el DOF</label>
+                                    <input type="text" class="form-control fechaPublicacionDof" name="fechaPublicacionDof" value="${getTexto(self.fecha_publicacion_dof)}">
+                                </div>
+                            </div>
+                        </div>  
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Fecha de resolución presidencial</label>
+                                    <input type="text" class="form-control fechaResolucionPresidencial" name="fechaResolucionPresidencial" value="${getTexto(self.fecha_resolucion_presidencial)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Fecha de asamblea de procede</label>
+                                    <input type="text" class="form-control fechaAsambleaProcede" name="fechaAsambleaProcede" value="${getTexto(self.fecha_asamblea_procede)}">
+                                </div>
+                            </div>
+                        </div> 
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Documento que ampara la propiedad</label>
+                                    <input type="text" class="form-control" name="documentoAmparaPropiedad" value="${getTexto(self.documento_ampara_propiedad)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Número del documento que ampara la propiedad</label>
+                                    <input type="text" class="form-control" name="numeroDocumentoAmparaPropiedad" value="${getTexto(self.numero_documento_ampara_propiedad)}" >
+                                </div>
+                            </div>
+                        </div>   
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Latitud (UTM)</label>
+                                    <input type="text" class="form-control" name="latitud" value="${getTexto(self.latitud)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Longitud (UTM)</label>
+                                    <input type="text" class="form-control" name="longitud" value="${getTexto(self.longitud)}">
+                                </div>
+                            </div>
+                        </div>   
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Superficie del polígono (Ha)</label>
+                                    <input type="text" class="form-control" name="superficiePoligono" value="${getTexto(self.superficie_poligono)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Superficie cartográfica (Ha)</label>
+                                    <input type="text" class="form-control" name="superficieCartografica" value="${getTexto(self.superficie_cartografica)}">
+                                </div>
+                            </div>
+                        </div>  
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Superficie arbolada (Ha)</label>
+                                    <input type="text" class="form-control" name="superficieArbolada" value="${getTexto(self.superficie_arbolada)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Superficie otros usos (Ha)</label>
+                                    <input type="text" class="form-control" name="superficieOtrosUsos" value="${getTexto(self.superficie_otros_usos)}">
+                                </div>
+                            </div>
+                        </div>  
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Tipo de clima</label>
+                                    <select name="tipoClima" class="form-control">
+                                          ${contruirComboSimple([], self.id_tipo_clima)}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Tipo de vegetación</label>
+                                     <select name="tipoVegetacion" class="form-control">
+                                           ${contruirComboSimple([], self.id_tipo_vegetacion)}
+                                     </select> 
+                                </div>
+                            </div>
+                        </div>  
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Tipo de fisiografía</label>
+                                    <input type="text" class="form-control" name="tipoFisiografia" value="${getTexto(self.tipo_fisiografia)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Corrientes intermitentes</label>
+                                    <input type="text" class="form-control" name="corrientesIntermitentes" value="${getTexto(self.corrientes_intermitentes)}">
+                                </div>
                             </div>
                         </div>
-                    </div> 
 
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Acción agraria</label>
-                                <input type="text" class="form-control" value="${this[posicion].accion_agraria}" readonly>
-                            </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Corrientes permanentes</label>
+                                    <input type="text" class="form-control" name="corrientesPermanentes" value="${getTexto(self.corrientes_permanentes)}">
+                                </div>
 
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Fecha de publicación en el DOF</label>
-                                <input type="text" class="form-control" value="${this[posicion].fecha_publicacion_dof}" readonly>
-                            </div>
-                        </div>
-                    </div>  
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Fecha de resolución presidencial</label>
-                                <input type="text" class="form-control" value="${this[posicion].fecha_resolucion_presidencial}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Fecha de asamblea de procede</label>
-                                <input type="text" class="form-control" value="${this[posicion].fecha_asamblea_procede}" readonly>
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Manantiales y/u ojos de agua</label>
+                                    <input type="text" class="form-control" name="manantialesOjoAgua" value="${getTexto(self.manantiales_ojos_agua)}">
+                                </div>
                             </div>
                         </div>
-                    </div> 
 
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Documento que ampara la propiedad</label>
-                                <input type="text" class="form-control" value="${this[posicion].documento_ampara_propiedad}" readonly>
-                            </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Manantiales y/u ojos de agua que abastecen</label>
+                                    <input type="text" class="form-control" name="manantialesOjoAguaAbastecen" value="${getTexto(self.manantiales_ojos_agua_abastecen)}">
+                                </div>
 
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Número del documento que ampara la propiedad</label>
-                                <input type="text" class="form-control" value="${this[posicion].numero_documento_ampara_propiedad}"  readonly>
-                            </div>
-                        </div>
-                    </div>   
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Latitud (UTM)</label>
-                                <input type="text" class="form-control" value="${this[posicion].latitud}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Longitud (UTM)</label>
-                                <input type="text" class="form-control" value="${this[posicion].longitud}" readonly>
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Erosión</label>
+                                    <input type="text" class="form-control" name="erosion" value="${getTexto(self.erosion)}">
+                                </div>
                             </div>
                         </div>
-                    </div>   
 
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Superficie del polígono (Ha)</label>
-                                <input type="text" class="form-control" value="${this[posicion].superficie_poligono}" readonly>
-                            </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Especies arbóreas</label>
+                                    <select name="especiesArboreas" class="form-control">
+                                           ${contruirComboSimple([], self.id_especies_arboreas)}
+                                     </select> 
+                                </div>
 
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Superficie cartográfica (Ha)</label>
-                                <input type="text" class="form-control" value="${this[posicion].superficie_cartografica}" readonly>
-                            </div>
-                        </div>
-                    </div>  
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Superficie arbolada (Ha)</label>
-                                <input type="text" class="form-control" value="${this[posicion].superficie_arbolada}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Superficie otros usos (Ha)</label>
-                                <input type="text" class="form-control" value="${this[posicion].superficie_otros_usos}" readonly>
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Distribución del estrato arbustivo</label>
+                                    <input type="text" name="distribucionEstratoArbustivo" class="form-control" value="${getTexto(self.distribucion_estrato_arbustivo)}">
+                                </div>
                             </div>
                         </div>
-                    </div>  
 
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Tipo de clima</label>
-                                <input type="text" class="form-control" value="${this[posicion].tipo_clima}" readonly>
-                            </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Distribución de renuevo</label>
+                                    <input type="text" class="form-control" name="distribucionRenuevo" value="${getTexto(self.distribucion_renuevo)}">
+                                </div>
 
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Tipo de vegetación</label>
-                                <input type="text" class="form-control" value="${this[posicion].tipo_vegetacion}" readonly>
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Cobertura promedio del arbolado</label>
+                                    <input type="text" class="form-control" name="coberturaPromedioArbolado" value="${getTexto(self.cobertura_promedio_arbolado)}">
+                                </div>
                             </div>
                         </div>
-                    </div>  
 
-                    <div class="form-group">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Fauna</label>
+                                    <input type="text" class="form-control" name="fauna" value="${getTexto(self.fauna)}">
+                                </div>
+
+                                <div class="col-md-6 col-sm-6">
+                                    <label>Observaciones del polígono</label>
+                                    <input type="text" class="form-control" name="observacionesPoligono" value="${getTexto(self.observaciones_poligono)}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
                         <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Tipo de fisiografía</label>
-                                <input type="text" class="form-control" value="${this[posicion].tipo_fisiografia}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Corrientes intermitentes</label>
-                                <input type="text" class="form-control" value="${this[posicion].corrientes_intermitentes}" readonly>
-                            </div>
+                              <div class="col-md-12 col-sm-12 col-xs-12 text-center">
+                                  ${botones}
+                              </div>                            
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Corrientes permanentes</label>
-                                <input type="text" class="form-control" value="${this[posicion].corrientes_permanentes}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Manantiales y/u ojos de agua</label>
-                                <input type="text" class="form-control" value="${this[posicion].manantiales_ojos_agua}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Manantiales y/u ojos de agua que abastecen</label>
-                                <input type="text" class="form-control" value="${this[posicion].manantiales_ojos_agua_abastecen}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Erosión</label>
-                                <input type="text" class="form-control" value="${this[posicion].erosion}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Especies arbóreas</label>
-                                <input type="text" class="form-control" value="${this[posicion].especies_arboreas}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Distribución del estrato arbustivo</label>
-                                <input type="text" class="form-control" value="${this[posicion].distribucion_estrato_arbustivo}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Distribución de renuevo</label>
-                                <input type="text" class="form-control" value="${this[posicion].distribucion_renuevo}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Cobertura promedio del arbolado</label>
-                                <input type="text" class="form-control" value="${this[posicion].cobertura_promedio_arbolado}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6 col-sm-6 col-xs-12">
-                                <label>Fauna</label>
-                                <input type="text" class="form-control" value="${this[posicion].fauna}" readonly>
-                            </div>
-
-                            <div class="col-md-6 col-sm-6">
-                                <label>Observaciones del polígono</label>
-                                <input type="text" class="form-control" value="${this[posicion].observaciones_poligono}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-12 col-sm-12 col-xs-12">
-                                <label>Figura</label>
-                                <input type="text" class="form-control" value="${this[posicion].figura_polygono}" readonly>
-                            </div>
-                        </div>
-                    </div>`;
+                    </form>`;
     
 
     return formulario;
@@ -1474,6 +1517,9 @@ function eliminaMultiRegistro(el){
 
     if(tipoMultiRegistro == 'Propietario'){
         tableName = 'formularios.representante';
+
+    }else if(tipoMultiRegistro == 'Poligono'){
+         tableName = 'formularios.poligonos';
     }
 
     swal({
@@ -1488,7 +1534,7 @@ function eliminaMultiRegistro(el){
         allowOutsideClick: false,
         allowEnterKey: false
     }).then(function() {
-        eliminaMultiRegistroAJAX(urlConexionMultiRegistros, 'deleteMultiregistro', tableName, folio , consecutivo, tableBody);
+        eliminaMultiRegistroAJAX(urlConexionMultiRegistro, 'deleteMultiregistro', tableName, folio , consecutivo, tableBody);
         
     })
 }
@@ -1659,26 +1705,20 @@ function getPredioImagen(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
-            
-            /*if(data.response.sucessfull){
+           
+            if(data.response.sucessfull){
                 tituloModal.html('Imagenes');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'imagenes'});
+                addOptionMultiRegistro.attr({'data-info': clave});
                 detalleMultiRegistro.hide();
                 flechaRegreso.hide();
                 multiRegistros.show();
+                addOptionMultiRegistro.show();
                 multiRegistros.html(plantillaImagenes(data.data));
                 modal.modal('show');
             }else{
                 alertaError(data.response.message);
-            }*/
-
-            tituloModal.html('Imagenes');
-                flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'imagenes'});
-                detalleMultiRegistro.hide();
-                flechaRegreso.hide();
-                multiRegistros.show();
-                multiRegistros.html(plantillaImagenes([]));
-                modal.modal('show');
+            }
         },
         error: function(err) {
             alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');           
@@ -1697,30 +1737,25 @@ function getPredioPoligonos(url,clave) {
     $.ajax({
         type: 'POST',
         url: url,
-        data: {action:'getPredioPoligonos',folio:clave},
+        data: {action:'getPoligonos',folio:clave},
         dataType: 'json',
         beforeSend: function (data) {
         },
         success: function(data){
-            /*
+             console.log(data);
             if(data.response.sucessfull){
                 tituloModal.html('Poligonos');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'Poligonos'});
+                addOptionMultiRegistro.attr({'data-info': clave});
                 detalleMultiRegistro.hide();
                 flechaRegreso.hide();
                 multiRegistros.show();
+                addOptionMultiRegistro.show();
                 multiRegistros.html(plantillaPoligonos(data.data));
                 modal.modal('show');
             }else{
                 alertaError(data.response.message);
-            }*/
-              tituloModal.html('Poligonos');
-                flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'Poligonos'});
-                detalleMultiRegistro.hide();
-                flechaRegreso.hide();
-                multiRegistros.show();
-                multiRegistros.html(plantillaPoligonos([]));
-                modal.modal('show');
+            }
            
         },
         error: function(err) {
@@ -1850,7 +1885,6 @@ function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, t
         dataType: 'json',
         beforeSend: function(data) {},
         success: function(data) {
-
             if (data.response.sucessfull) {
                tableBodyMultiRegistro.find('.renglon'+consecutivo).remove();
                alertaExito(data.response.message);
@@ -1952,6 +1986,316 @@ $('#btnhelpme').on('click',function(){
 ******************************************************************************************************
 ******************************************************************************************************
 *****************************************************************************************************/
+
+/*
+ * @function validaFormularioPoligono
+ * @param {Object jquery} element - Es el id del formulario de poligono
+ * @description Este metodo prepara el formulario y agrega los plugin a los elementos del dom
+ */
+function validaFormularioPoligono(element) {
+    if ($(element).length > 0) $(element).validate().destroy();
+
+    $(element).validate({
+        errorElement: 'span',
+        wrapper: 'label',
+        rules: {
+            accionAgraria: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            fechaPublicacionDof: {
+                required: true,
+                empty: true
+            },
+
+            fechaResolucionPresidencial: {
+                required: true,
+                empty: true
+            },
+
+            fechaAsambleaProcede: {
+                required: true,
+                empty: true
+            },
+
+            documentoAmparaPropiedad: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            numeroDocumentoAmparaPropiedad: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            latitud: {
+                required: true,
+                numeros: true,
+                maxlength: 7
+            },
+
+            longitud: {
+                required: true,
+                numeros: true,
+                maxlength: 7
+            },
+
+            superficiePoligono: {
+                required: true,
+                decimales: true
+            },
+
+            superficieCartografica: {
+                required: true,
+                decimales: true
+            },
+
+            superficieArbolada: {
+                required: true,
+                decimales: true
+            },
+
+            superficieOtrosUsos: {
+                required: true,
+                decimales: true
+            },
+
+            tipoClima: {
+                valueNotEquals: '-1'
+            },
+
+            tipoVegetacion: {
+                valueNotEquals: '-1'
+            },
+
+            tipoFisiografia: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            corrientesIntermitentes: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            corrientesPermanentes: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            manantialesOjoAgua: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            manantialesOjoAguaAbastecen: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            erosion: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            especiesArboreas: {
+                valueNotEquals: '-1'
+            },
+
+            distribucionEstratoArbustivo: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            distribucionRenuevo: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            coberturaPromedioArbolado: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            fauna: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            observacionesPoligono: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            }
+        },
+
+        messages: {
+            accionAgraria: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            fechaPublicacionDof: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios'
+            },
+
+            fechaResolucionPresidencial: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios'
+            },
+
+            fechaAsambleaProcede: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios'
+            },
+
+            documentoAmparaPropiedad: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            numeroDocumentoAmparaPropiedad: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            latitud: {
+                required: 'Campo requerido',
+                numeros: 'Ingrese solo números',
+                maxlength: 'Maximo 7 caracteres'
+            },
+
+            longitud: {
+                required: 'Campo requerido',
+                numeros: 'Ingrese solo números',
+                maxlength: 'Maximo 7 caracteres'
+            },
+
+            superficiePoligono: {
+                required: 'Campo requerido',
+                decimales: 'Ingrese formato correcto 0.00'
+            },
+
+            superficieCartografica: {
+                required: 'Campo requerido',
+                decimales: 'Ingrese formato correcto 0.00'
+            },
+
+            superficieArbolada: {
+                required: 'Campo requerido',
+                decimales: 'Ingrese formato correcto 0.00'
+            },
+
+            superficieOtrosUsos: {
+                required: 'Campo requerido',
+                decimales: 'Ingrese formato correcto 0.00'
+            },
+
+            tipoClima: {
+                valueNotEquals: 'Seleccione una opción'
+            },
+
+            tipoVegetacion: {
+                valueNotEquals: 'Seleccione una opción'
+            },
+
+            tipoFisiografia: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            corrientesIntermitentes: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            corrientesPermanentes: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            manantialesOjoAgua: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            manantialesOjoAguaAbastecen: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            erosion: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            especiesArboreas: {
+                valueNotEquals: 'Seleccione una opción'
+            },
+
+            distribucionEstratoArbustivo: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            distribucionRenuevo: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            coberturaPromedioArbolado: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            fauna: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            observacionesPoligono: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            }
+        },
+
+        submitHandler: function(form) {
+            alert('Todo bien para poligonos');
+            return false;
+        }
+    });
+
+}
+
 
 /*
  * @function validaFormularioRepresentante
