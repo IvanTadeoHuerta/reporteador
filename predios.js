@@ -1,5 +1,5 @@
 /**
- * @fileoverview auditoria.js  Este archivo contiene las funciones correspondientes al modulo de predios 
+ * @fileoverview predios.js  Este archivo contiene las funciones correspondientes al modulo de predios 
  * @author Ivan Tadeo Huerta <ivantec5sem@gmail.com>
  *
  */
@@ -571,6 +571,8 @@ addOptionMultiRegistro.on('click', function() {
         mostrarDetallePropietario(this);
     }else if(opcion == 'poligono'){
        mostrarDetallePoligono(this);
+    }else if(opcion == 'imagen'){
+        mostrarDetalleImagen(this);
     }
 });
 
@@ -1184,20 +1186,22 @@ function plantillaImagenes(arr){
     arregloDeImagenes = arr.slice();
     
     let renglones = '';
-    let renglon = `<tr>
+    let renglon = `<tr class="renglon:consecutivo:">
                      <td>:consecutivo:</td>
                      <td>:descripcion:</td>
                      <td>:fecha:</td>
                      <td><a href="#" download="/:url:/">Ver Imagen</a></td>
-                    <td>:campoAsociado:</td>
+                     <td>:campoAsociado:</td>
+                     <td><button type="button" class="btn btn-success" data-action="update" data-consecutivo=":consecutivo:" onclick="mostrarDetalleImagen(this)">Actualizar</button></td>
+                     <td><button type="button" class="btn btn-default" data-consecutivo=":consecutivo:" data-folio=":folio:" data-info="Imagen" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
                   </tr>`;
 
     arr.forEach(function(value){
         renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(':descripcion:',value.descripcion).replace(':fecha:',value.fecha)
-                    .replace(/:url:/,value.url).replace(':campoAsociado:',value.campoasociado);
+                    .replace(/:url:/,value.url).replace(':campoAsociado:',value.campoasociado).replace(/:folio:/g,value.folio);
     });
 
-    renglones= (renglones == '')? `<tr><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
+    renglones= (renglones == '')? `<tr><td colspan="7"><center>No hay datos registrados</center></td></tr>`: renglones;
     let html = `<div class="table-responsive table-striped table-bordered table-hover">
                     <table class="table">
                         <thead>
@@ -1207,9 +1211,11 @@ function plantillaImagenes(arr){
                             <th>Fecha</th>
                             <th>Imagen</th>
                             <th>Campo Asociado</th>
+                            <th>Actualizar</th>
+                            <th>Eliminar</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbodyTablaImagen">
                             ${renglones}
                         </tbody>
                     </table>
@@ -1219,7 +1225,22 @@ function plantillaImagenes(arr){
     
 }
 
+/**
+ * @function mostrarDetalleImagen
+ * @param  {object} element - objecto  DOM
+ */
 
+function mostrarDetalleImagen(element) {
+    detalleMultiRegistro.html(plantillaDetalleImagen.call(arregloDeImagenes, element));
+    addOptionMultiRegistro.hide();
+    tituloModal.html('Imagenes');
+    flechaRegreso.attr('data-option', 'detalleMultiRegistro');
+    flechaRegreso.show();
+    multiRegistros.hide();
+    detalleMultiRegistro.show();
+    agregaCalendario('.fechaImagen','down');
+    validarFormularioImagen('#formularioImagen');
+}
 
 /**
  * @function mostrarDetallePropietario
@@ -1347,6 +1368,97 @@ function plantillaDetalleRepresentante(element){
                     </div>
                   </form>
                   `;
+    
+
+    return formulario;
+}
+
+
+/**
+ * @function plantillaDetalleImagen
+ * @param  {object} element - objecto  DOM
+ * @return  {String} Retorno el formulario lleno con los detalles
+ */
+function plantillaDetalleImagen(element){
+    let option = $(element).attr('data-action');
+    let valueFolio =  ''; 
+    let botones = '';
+    let display = '';
+    
+    self = '';
+    
+    if(option == 'agregar'){
+
+        botones = '<button type="submit" id="agregarMultiImagen" class="btn btn-success">Agregar multiregistro</button>';
+        display= 'style="display:none"';
+        valueFolio = $(element).attr('data-info');
+
+    }else if(option == 'update'){
+        botones = '<button type="submit" id="actualizarMultiImagen" class="btn btn-success">Actualizar</button>';
+
+        let consecutivo = parseInt($(element).attr('data-consecutivo'));
+    
+        let posicion = arrayObjectIndexOf(this,consecutivo,'consecutivo');
+
+        (posicion > -1)? self = this[posicion] : '';
+        (posicion > -1)? valueFolio =  self.folio : valueFolio='';
+    }
+
+
+    let formulario =`<form id="formularioImagen" onsubmit="return false" autocomplete="off">
+                        <div class="form-group" ${display}>
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Consecutivo</label>
+                                    <input type="text" class="form-control" name="consecutivo" value="${getTexto(self.consecutivo)}" readonly>
+                                </div>
+
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <label>Folio</label>
+                                    <input type="text" class="form-control" name="folio" value="${getTexto(self.folio)}" readonly>
+                                </div>
+                            </div>
+                        </div> 
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <label>Url</label>
+                                        <input type="file" name="url"  class="form-control">
+                                    </div>
+                    
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <label>Fecha</label>
+                                        <input type="text" name="fecha" value="${getTexto(self.fecha)}" class="form-control fechaImagen">
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div class="from-group">
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <label>Descripción</label>
+                                        <input type="text" name="descripcion" value="${getTexto(self.descripcion)}" class="form-control">
+                                    </div>
+                    
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <label>Campo Asociado</label>
+                                        <select name="campoAsociado" class="form-control">
+                                              ${contruirComboSimple([], self.campoasociado)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div class="form-group">
+                                <div class="row">
+                                      <div class="col-md-12 col-sm-12 col-xs-12 text-center">
+                                      <br>
+                                          ${botones}
+                                      </div>
+                                </div>
+                            </div>
+                     </form>`;
     
 
     return formulario;
@@ -1520,6 +1632,9 @@ function eliminaMultiRegistro(el){
 
     }else if(tipoMultiRegistro == 'Poligono'){
          tableName = 'formularios.poligonos';
+
+    }else if(tipoMultiRegistro == 'Imagen'){
+       tableName = 'formularios.imagen';
     }
 
     swal({
@@ -1700,12 +1815,12 @@ function getPredioImagen(url,clave) {
     $.ajax({
         type: 'POST',
         url: url,
-        data: {action:'getPredioImagen',folio:clave},
+        data: {action:'getImagenes',folio:clave},
         dataType: 'json',
         beforeSend: function (data) {
         },
         success: function(data){
-           
+           console.log(data);
             if(data.response.sucessfull){
                 tituloModal.html('Imagenes');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'imagenes'});
@@ -1742,7 +1857,7 @@ function getPredioPoligonos(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
-             console.log(data);
+             
             if(data.response.sucessfull){
                 tituloModal.html('Poligonos');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'Poligonos'});
@@ -1986,6 +2101,67 @@ $('#btnhelpme').on('click',function(){
 ******************************************************************************************************
 ******************************************************************************************************
 *****************************************************************************************************/
+
+/*
+ * @function validaFormularioPoligono
+ * @param {Object jquery} element - Es el id del formulario de imagenes
+ * @description Este metodo prepara el formulario y agrega los plugin a los elementos del dom
+ */
+function validarFormularioImagen(element) {
+    if ($(element).length > 0) $(element).validate().destroy();
+    
+    $(element).validate({
+        errorElement: 'span',
+        wrapper: 'label',
+        rules: {
+            url: {
+                required: true
+            },
+
+            fecha: {
+                required: true,
+                empty: true,
+                maxlength: 15
+            },
+
+            descripcion: {
+                required: true,
+                empty: true,
+                maxlength: 255
+            },
+
+            campoAsociado: {
+                valueNotEquals: '-1'
+            }
+        },
+
+        messages: {
+            url: {
+                required: 'Campo requerido'
+            },
+
+            fecha: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 15 caracteres'
+            },
+
+            descripcion: {
+                required: 'Campo requerido',
+                empty: 'No deje espacios vacios',
+                maxlength: 'Maximo 255 caracteres'
+            },
+
+            campoAsociado: {
+                valueNotEquals: 'Seleccione una opción'
+            }
+        },
+
+        submitHandler: function(form) {
+            return false;
+        }
+    });
+}
 
 /*
  * @function validaFormularioPoligono
