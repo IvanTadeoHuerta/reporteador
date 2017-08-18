@@ -215,6 +215,7 @@
 var abrirFicha = function (data) {
     
     let region = JSON.parse(JSON.stringify(catalogosRegiones));
+    let municipios = JSON.parse(JSON.stringify(catalogosMunicipio));
     let tenencia =  JSON.parse(JSON.stringify(catalogosTipoTenencia));
     let estado =  JSON.parse(JSON.stringify(catalogosEstatus));
     let ap =  JSON.parse(JSON.stringify(catalogosAceptableAaprovechamiento));
@@ -222,7 +223,7 @@ var abrirFicha = function (data) {
 
     tituloAccion.html('Datos del predio');
 
-    let ficha = htmlFicha(data,'find',region,catalogosMunicipio,catalogosLocalidades,tenencia,estado,ap);
+    let ficha = htmlFicha(data,'find',region,municipios,catalogosLocalidades,tenencia,estado,ap);
     bodyPanelFicha.html(ficha);
 
     panelFicha.show();
@@ -487,9 +488,10 @@ panelFicha.on('click','.btn-delete',function(){
 
 panelFicha.on('change','.comboRegiones', function(){
       let idRegion = parseInt($(this).val());
+      let municipios = JSON.parse(JSON.stringify(catalogosMunicipio));
 
       $('.comboMunicipio').empty();
-      let el = contruirComboSimple(MunicipiosPorRegion(catalogosMunicipio,idRegion),idRegion);
+      let el = contruirComboSimple(MunicipiosPorRegion(municipios,idRegion));
       $('.comboMunicipio').append(el);
       
       cleanCombo('.comboLocalidad');      
@@ -499,8 +501,10 @@ panelFicha.on('change','.comboRegiones', function(){
 
 panelFicha.on('change','.comboMunicipio', function(){
       let idMunicipio = parseInt($(this).val());
+      let localidades = JSON.parse(JSON.stringify(catalogosLocalidades));
+      
       $('.comboLocalidad').empty();
-      let el = contruirComboSimple(LocalidadPorMunicipio(catalogosLocalidades,idMunicipio),idMunicipio);
+      let el = contruirComboSimple(LocalidadPorMunicipio(localidades,idMunicipio));
       $('.comboLocalidad').append(el);
 });
 
@@ -645,10 +649,11 @@ function eliminaElementoSeleccionado( arr, item ){
 function agregarPredio(text, clase){
 
     let region = JSON.parse(JSON.stringify(catalogosRegiones));
+    let municipios = JSON.parse(JSON.stringify(catalogosMunicipio));
     let tenencia =  JSON.parse(JSON.stringify(catalogosTipoTenencia));
     let estado =  JSON.parse(JSON.stringify(catalogosEstatus));
     let ap =  JSON.parse(JSON.stringify(catalogosAceptableAaprovechamiento));
-    let ficha = htmlFicha({},'add',region,catalogosMunicipio,catalogosLocalidades,tenencia,estado,ap);
+    let ficha = htmlFicha({},'add',region,municipios,catalogosLocalidades,tenencia,estado,ap);
     
     multiregistroBandera = false;
     bodyPanelFicha.html(ficha);  
@@ -1424,7 +1429,7 @@ function plantillaDetalleImagen(element){
                                 <div class="row">
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Url</label>
-                                        <input type="file" name="url"  class="form-control">
+                                        <input type="file" name="url"  value="${self.url}" class="form-control">
                                     </div>
                     
                                     <div class="col-md-6 col-sm-6 col-xs-12">
@@ -1596,6 +1601,36 @@ panelFicha.on('click','.ctgo', function(){
     $('#modalCatalogoCuenca').modal('show');
 });
 
+
+$('#btnRegresar').on('click',function(){
+   window.location.assign("/SIFEM/index.html");
+});
+
+
+$('#btnhelpme').on('click',function(){
+    let el = $('#btnAccion');
+
+    let section = el.attr('data-info')|| '';
+
+
+    let helpMeAdd = `<b>Para agregar un predio</b><br>
+                      1.- <br>
+                      2.- <br>
+                      3.- <br>
+                      4.- <br>
+                      5.- `;
+
+    let helpMeUpdate = ` <b>Para actualizar un predio</b><br>
+                            1.- <br>
+                            2.- <br>
+                            3.- <br>
+                            4.- <br>
+                            5.- `;
+
+    let help = (section == 'addPredio')?  helpMeUpdate : helpMeAdd;
+
+    alertaInfo('',help,'Ayuda');
+});
 
 /**
  * @function arrayObjectIndexOf
@@ -1820,7 +1855,7 @@ function getPredioImagen(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
-           console.log(data);
+           
             if(data.response.sucessfull){
                 tituloModal.html('Imagenes');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'imagenes'});
@@ -2038,23 +2073,6 @@ var alertaError = function(mensaje) {
   });
 }
 
-/*var alertaAgregar = function(mensaje = "", tipo = "info", color = "#5499C7", titulo = "", idPredio = '' , fecha='', b=false) {
-    swal({
-        title: titulo,
-        text: mensaje,
-        type: tipo,
-        showCancelButton: true,
-        confirmButtonColor: color,
-        cancelButtonColor: '#BDBDBD',
-        cancelButtonText: 'Cancelar',
-        confirmButtonText: 'Aceptar',
-        allowOutsideClick: false,
-        allowEnterKey: false
-    }).then(function() {
-        (b)? setAuditoriaTecnica(urlConexion,idPredio,fecha,b):alertaInfo('Busque y seleccione un predio');
-    })
-}*/
-
 
 var alertaInfo = function(mensaje='',html='',titulo="Información") {
     swal({
@@ -2078,19 +2096,6 @@ var alertaExito = function(mensaje) {
 
 
 
-$('#btnRegresar').on('click',function(){
-   window.location.assign("/SIFEM/index.html");
-});
-
-$('#btnhelpme').on('click',function(){
-    let help = `<b>Para agregar un predio</b><br>
-                      1.- Buscar un predio por nombre o representante.<br>
-                      2.- Seleccionar dando clic sobre el predio.<br>
-                      3.- En el segundo panel seleccionar <b>SI</b> en la opcíon Solicito auditoría técnica preventiva<br>
-                      4.- Hacer clic sobre la caja de texto Fecha de auditoría técnica y elegir fecha<br>
-                      5.- Dar clic en boton <b>Agregar</b>`;
-    alertaInfo('',help,'Ayuda');
-});
 
 
 /*****************************************************************************************************
@@ -2109,7 +2114,7 @@ $('#btnhelpme').on('click',function(){
  */
 function validarFormularioImagen(element) {
     if ($(element).length > 0) $(element).validate().destroy();
-    
+
     $(element).validate({
         errorElement: 'span',
         wrapper: 'label',
