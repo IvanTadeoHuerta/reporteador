@@ -11,7 +11,7 @@
   */
   const url= 'http://localhost:8080/' ;
 
-   /**
+  /**
   * @constant
   * @type {string} urlConexionCatalogos 
   * @default
@@ -219,11 +219,12 @@ var abrirFicha = function (data) {
     let tenencia =  JSON.parse(JSON.stringify(catalogosTipoTenencia));
     let estado =  JSON.parse(JSON.stringify(catalogosEstatus));
     let ap =  JSON.parse(JSON.stringify(catalogosAceptableAaprovechamiento));
+    let localidades =  JSON.parse(JSON.stringify(catalogosLocalidades));
     multiregistroBandera = true;
 
     tituloAccion.html('Datos del predio');
 
-    let ficha = htmlFicha(data,'find',region,municipios,catalogosLocalidades,tenencia,estado,ap);
+    let ficha = htmlFicha(data,'find',region,municipios,localidades,tenencia,estado,ap);
     bodyPanelFicha.html(ficha);
 
     panelFicha.show();
@@ -242,19 +243,23 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
     
     let botones='';
     let disabled='';
+    let opcionEjecutar='';
+
     switch(action){
         case 'add':
+            opcionEjecutar = 'add';
             botones = `<button type="submit" class="btn btn-success btn-aceptar">Agregar predio</button>
                    <button type="button" class="btn btn-default btn-reset">Limpiar formulario</button>`;
           break;
         case 'find':
+            opcionEjecutar = 'update';
             disabled = 'disabled';
             botones = `<button type="button" class="btn btn-default btn-delete">Eliminar</button>
                       <button type="submit"  class="btn btn-success btn-update">Actualizar</button>`;
           break;
     }
    
-    return `<form id="formularioPredios" autocomplete="off" onsubmit="return false;">
+    return `<form id="formularioPredios" autocomplete="off" onsubmit="return false;" data-action="${opcionEjecutar}">
                 <div class="row">
                     <br>
                     <div class="col-md-3 col-sm-3 col-xs-12">
@@ -508,9 +513,6 @@ panelFicha.on('change','.comboMunicipio', function(){
       $('.comboLocalidad').append(el);
 });
 
-panelFicha.on('change','.comboLocalidad', function(){
- 
-});
 
 
 /*
@@ -653,7 +655,9 @@ function agregarPredio(text, clase){
     let tenencia =  JSON.parse(JSON.stringify(catalogosTipoTenencia));
     let estado =  JSON.parse(JSON.stringify(catalogosEstatus));
     let ap =  JSON.parse(JSON.stringify(catalogosAceptableAaprovechamiento));
-    let ficha = htmlFicha({},'add',region,municipios,catalogosLocalidades,tenencia,estado,ap);
+    let localidades =  JSON.parse(JSON.stringify(catalogosLocalidades));
+
+    let ficha = htmlFicha({},'add',region,municipios,localidades,tenencia,estado,ap);
     
     multiregistroBandera = false;
     bodyPanelFicha.html(ficha);  
@@ -1937,6 +1941,7 @@ function insertPredio(url,datosPredios, btn, formulario, btnReset, btnAgregar, b
         success: function(data){
             
             if(data.response.sucessfull){
+                $('#InputclaveUnicaIdentificacion').val(data.data);
 
                 $(formulario).find(':input').each(function() {
                     
@@ -1947,8 +1952,42 @@ function insertPredio(url,datosPredios, btn, formulario, btnReset, btnAgregar, b
                 $(btnAgregar).hide();
                 $(btnReset).html('Agregar otro predio');
                 $(btn).addClass('bloqueado');
-                $(botonesMultiRegistros).attr('data-info','7223489559');
-                alertaExito('Se registro predio correctamente');
+                $(botonesMultiRegistros).attr('data-info',data.data);
+                alertaExito(data.response.message);
+
+            }else{
+                alertaError(data.response.message);
+            }
+           
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');         
+        }
+
+    }); 
+}
+
+
+
+
+/**
+ * @function updatePredio
+ * @param  {object JSON} datosPredios - Datos del formulario de predio
+ * @param {String} formulario - selector del formulario
+ */
+function updatePredio(url,datosPredios) { 
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: {action:'updatePredio', formularioPrincipal: datosPredios},
+        dataType: 'json',
+        beforeSend: function (data) {
+        },
+        success: function(data){
+            console.log(data);
+            if(data.response.sucessfull){
+                
+                alertaExito(data.response.message);
 
             }else{
                 alertaError(data.response.message);
@@ -2108,7 +2147,7 @@ var alertaExito = function(mensaje) {
 *****************************************************************************************************/
 
 /*
- * @function validaFormularioPoligono
+ * @function validarFormularioImagen
  * @param {Object jquery} element - Es el id del formulario de imagenes
  * @description Este metodo prepara el formulario y agrega los plugin a los elementos del dom
  */
@@ -2736,8 +2775,9 @@ function validaFormulario(element) {
 
         submitHandler: function(form) {
            
-            let idCuencas = $('#btnCuencaClic').attr('data-select') || '';
-            let idApn = $('#btnApnClic').attr('data-select') || '';
+            let idCuencas = $('#btnCuencaClic').attr('data-select').trim() || '';
+            let idApn = $('#btnApnClic').attr('data-select').trim() || '';
+            let operacion = $(form).attr('data-action') || '';
 
             if(idCuencas.startsWith(','))idCuencas = idCuencas.substr(1);
             if(idApn.startsWith(','))idApn = idApn.substr(1);
@@ -2746,7 +2786,15 @@ function validaFormulario(element) {
             $('#idAreaNaturalProtegidaHidden').val(idApn);
             let datos = { 'formulario' : []};
             datos.formulario.push($(form).serializeObject());
-            insertPredio(urlConexionPredios,JSON.stringify(datos),'.ctgo','#formularioPredios','.btn-reset','.btn-aceptar','.multiregistro');
+
+            if( operacion == 'add'){
+               insertPredio(urlConexionPredios,JSON.stringify(datos),'.ctgo','#formularioPredios','.btn-reset','.btn-aceptar','.multiregistro');
+            }else if(operacion == 'update'){
+               updatePredio(urlConexionPredios,JSON.stringify(datos));
+            }else{
+              alert('Acción no disponible');
+            }
+            
 
             return false;
         }
