@@ -831,11 +831,11 @@ function agregaCalendario(element, drops='up') {
 
 
 /**
- * @function plantillaRepresentates
+ * @function plantillaRepresentantes
  * @param  {array} arr - Arreglo con objetos JSON
  * @return  {String} retorna una tabla con codigo html
  */
-function plantillaRepresentates(arr){
+function plantillaRepresentantes(arr){
 
     arregloDeRepresentantes = arr.slice();
     
@@ -852,7 +852,7 @@ function plantillaRepresentates(arr){
         renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(/:folio:/g,value.folio).replace(':nombre:',value.nombre_propietario_representante);
     });
 
-    renglones= (renglones == '')? `<tr><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
+    renglones= (renglones == '')? `<tr class="sinRegistros"><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
     let html = `<div class="table-responsive table-striped table-bordered table-hover">
                     <table class="table">
                         <thead>
@@ -1281,16 +1281,19 @@ function plantillaDetalleRepresentante(element){
     let valueFolio =  ''; 
     let botones = '';
     let display = '';
+    let accion = '';
     
     self = '';
     
     if(option == 'agregar'){
-
+        accion = 'add';
         botones = '<button type="submit" id="agregarMultiPersona" class="btn btn-success">Agregar multiregistro</button>';
         display= 'style="display:none"';
         valueFolio = $(element).attr('data-info');
 
     }else if(option == 'update'){
+        accion = 'update';
+
         botones = '<button type="submit" id="actualizarMultiPersona" class="btn btn-success">Actualizar</button>';
 
         let consecutivo = parseInt($(element).attr('data-consecutivo'));
@@ -1302,17 +1305,17 @@ function plantillaDetalleRepresentante(element){
     }
 
 
-    let formulario =`<form id="formularioRepresentante" onsubmit="return false" autocomplete="off">
+    let formulario =`<form id="formularioRepresentante" onsubmit="return false" data-action="${accion}" autocomplete="off">
                         <div class="form-group" ${display}>
                           <div class="row">
                               <div class="col-md-6 col-sm-6 col-xs-12">
                                   <label>Consecutivo</label>
-                                  <input type="text" class="form-control" name="nombreConsecutivo" value="${getTexto(self.consecutivo)}"  readonly>
+                                  <input type="text" class="form-control" name="consecutivo" value="${getTexto(self.consecutivo)}"  readonly>
                               </div>
 
                               <div class="col-md-6 col-sm-6 col-xs-12">
                                   <label>Folio</label>
-                                  <input type="text" class="form-control" name="nombreFolio" value="${getTexto(valueFolio)}" readonly>
+                                  <input type="text" class="form-control" name="folio" value="${getTexto(valueFolio)}" readonly>
                               </div>
                           </div> 
                       </div>
@@ -1321,12 +1324,12 @@ function plantillaDetalleRepresentante(element){
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Nombre del propietario o representante</label>
-                                <input type="text" class="form-control" name="nombrePropietario" value="${getTexto(self.nombre_propietario_representante)}">
+                                <input type="text" class="form-control" name="nombre_propietario_representante" value="${getTexto(self.nombre_propietario_representante)}">
                             </div>
 
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Nombre del secretario o representante Legal</label>
-                                <input type="text" class="form-control" name="nombreSecretario"  value="${getTexto(self.nombre_secretario_representante_legal)}">
+                                <input type="text" class="form-control" name="nombre_secretario_representante_legal"  value="${getTexto(self.nombre_secretario_representante_legal)}">
                             </div>
                         </div>
                     </div> 
@@ -1335,12 +1338,12 @@ function plantillaDetalleRepresentante(element){
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Nombre del tesorero</label>
-                                <input type="text" class="form-control" name="nombreTesorero" value="${getTexto(self.nombre_tesorero)}">
+                                <input type="text" class="form-control" name="nombre_tesorero" value="${getTexto(self.nombre_tesorero)}">
                             </div>
 
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Curp del propietario o representante</label>
-                                <input type="text" class="form-control" name="curpPropietario" value="${getTexto(self.curp_propietario_o_representante)}">
+                                <input type="text" class="form-control" name="curp_propietario_o_representante" value="${getTexto(self.curp_propietario_o_representante)}">
                             </div>
                         </div>
                     </div> 
@@ -1349,12 +1352,12 @@ function plantillaDetalleRepresentante(element){
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Inicio del periodo</label>
-                                <input type="text"  class="form-control fechaInicioPeriodo" name="inicioPeriodo" value="${getTexto(self.inicio_periodo)}">
+                                <input type="text"  class="form-control fechaInicioPeriodo" name="inicio_periodo" value="${getTexto(self.inicio_periodo)}">
                             </div>
 
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Fin del periodo</label>
-                                <input type="text" class="form-control fechaFinPeriodo" name="finPeriodo" value="${getTexto(self.fin_periodo)}">
+                                <input type="text" class="form-control fechaFinPeriodo" name="fin_periodo" value="${getTexto(self.fin_periodo)}">
                             </div>
                         </div>
                     </div> 
@@ -1363,7 +1366,7 @@ function plantillaDetalleRepresentante(element){
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Observaciones de la administración</label>
-                                <input type="text" class="form-control" name="observacionesAdministracion" value="${getTexto(self.observaciones_administracion)}">
+                                <input type="text" class="form-control" name="observaciones_administracion" value="${getTexto(self.observaciones_administracion)}">
                             </div>                            
                         </div>
                     </div>
@@ -1431,11 +1434,10 @@ function plantillaDetalleImagen(element){
 
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <label>Url</label>
-                                        <input type="file" name="url"  value="${self.url}" class="form-control">
+                                     <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <label>Descripción</label>
+                                        <input type="text" name="descripcion" value="${getTexto(self.descripcion)}" class="form-control">
                                     </div>
-                    
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Fecha</label>
                                         <input type="text" name="fecha" value="${getTexto(self.fecha)}" class="form-control fechaImagen">
@@ -1446,15 +1448,17 @@ function plantillaDetalleImagen(element){
                             <div class="from-group">
                                 <div class="row">
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <label>Descripción</label>
-                                        <input type="text" name="descripcion" value="${getTexto(self.descripcion)}" class="form-control">
-                                    </div>
-                    
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Campo Asociado</label>
                                         <select name="campoAsociado" class="form-control">
                                               ${contruirComboSimple([], self.campoasociado)}
                                         </select>
+                                    </div>
+
+                                     <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <div id="contenedorCambiarImagen">
+                                            <label>Url</label>
+                                            <input type="file" name="url" class="form-control">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1472,6 +1476,7 @@ function plantillaDetalleImagen(element){
 
     return formulario;
 }
+
 
 /**
  * @function contruirComboSimple
@@ -1654,6 +1659,25 @@ function arrayObjectIndexOf(arr, searchTerm, property) {
     return -1;
 }
 
+/**
+ * @function popArray
+ * @param  {Array.<T>} arr - Arreglo de objectos
+ * @param  {number} id - Consecutivo a eliminar
+ * @param  {String} property - Propiedad que se utilizara para buscar el valor
+ * @description Esta funcion elimina un elemento del arreglo de multiregistros
+ */
+function popArray(array,id, property){
+  if(array.length > 0)
+  {
+    let exist = arrayObjectIndexOf (array, id , property );
+    if(exist != -1){
+      array.splice(exist,1);
+      find = true;
+    }
+
+  }
+}
+
 
 /**  
  * @function eliminaMultiRegistro
@@ -1665,15 +1689,19 @@ function eliminaMultiRegistro(el){
     let tipoMultiRegistro = $(el).attr('data-info');
     let tableBody = $('#tbodyTabla'+tipoMultiRegistro);
     let tableName = '';
+    let arregloEliminar;
 
     if(tipoMultiRegistro == 'Propietario'){
         tableName = 'formularios.representante';
+        arregloEliminar = arregloDeRepresentantes;
 
     }else if(tipoMultiRegistro == 'Poligono'){
          tableName = 'formularios.poligonos';
+         arregloEliminar =  arregloDePoligonos;
 
     }else if(tipoMultiRegistro == 'Imagen'){
        tableName = 'formularios.imagen';
+       arregloEliminar = arregloDeImagenes;
     }
 
     swal({
@@ -1688,7 +1716,7 @@ function eliminaMultiRegistro(el){
         allowOutsideClick: false,
         allowEnterKey: false
     }).then(function() {
-        eliminaMultiRegistroAJAX(urlConexionMultiRegistro, 'deleteMultiregistro', tableName, folio , consecutivo, tableBody);
+        eliminaMultiRegistroAJAX(urlConexionMultiRegistro, 'deleteMultiregistro', tableName, folio , consecutivo, tableBody , arregloEliminar);
         
     })
 }
@@ -1823,7 +1851,7 @@ function getPredioRepresentantes(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
-            
+
             if(data.response.sucessfull){
                 tituloModal.html('Propietarios o Representantes');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'Propietario'});
@@ -1831,7 +1859,7 @@ function getPredioRepresentantes(url,clave) {
                 detalleMultiRegistro.hide();
                 multiRegistros.show();
                 addOptionMultiRegistro.show();
-                multiRegistros.html(plantillaRepresentates(data.data));
+                multiRegistros.html(plantillaRepresentantes(data.data));
                 modal.modal('show');
             }else{
                 alertaError(data.response.message);
@@ -2063,10 +2091,11 @@ function cargaCatalogos(url, action, tableName) {
  * @param  {string} action - accion a realizar 
  * @param {String} tableName - nombre de la tabla de multiRegistro
  * @param {String} consecutivo - id del multiRegistro que se quiere eliminar
+ * @param {Array} Arreglo - array de datos del que se eliminara el elemento
  * @param {String} tableBodyMultiRegistro - id del de la tabla del multiRegistro
  */
 
-function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, tableBodyMultiRegistro) {
+function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, tableBodyMultiRegistro, Arreglo) {
     $.ajax({
         type: 'POST',
         url: url,
@@ -2075,8 +2104,122 @@ function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, t
         beforeSend: function(data) {},
         success: function(data) {
             if (data.response.sucessfull) {
+               popArray(Arreglo,parseInt(consecutivo), 'consecutivo');
                tableBodyMultiRegistro.find('.renglon'+consecutivo).remove();
                alertaExito(data.response.message);
+
+               console.log(arregloDeRepresentantes);
+            } else {
+                alertaError(data.response.message);
+            }
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
+
+/**
+ * @function insertMultiRegistroRepresentante
+ * @param  {string} url - url del service 
+ * @param  {string} action - accion a realizar 
+ * @param {JSON} representante - datos del multiResgitro
+ */
+function insertMultiRegistroRepresentante(url, action, representante, tbody, flechaRegreso) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: { action: action, representante: representante },
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+           
+            let datos = JSON.parse(representante).representante[0];
+
+            if (data.response.sucessfull) {
+
+                arregloDeRepresentantes.push({
+                    consecutivo: data.data,
+                    curp_propietario_o_representante: datos.curp_propietario_o_representante,
+                    fin_periodo:  datos.fin_periodo,
+                    folio: datos.folio,
+                    inicio_periodo:   datos.inicio_periodo,
+                    nombre_propietario_representante: datos.nombre_propietario_representante,
+                    nombre_secretario_representante_legal: datos.nombre_secretario_representante_legal,
+                    nombre_tesorero: datos.nombre_tesorero,
+                    observaciones_administracion: datos.observaciones_administracion
+
+                });
+
+                let renglon = `<tr class="renglon${data.data}">
+                     <td>${data.data}</td>
+                     <td>${datos.folio}</td>
+                     <td>${datos.nombre_propietario_representante}</td>
+                     <td><button type="button" class="btn btn-success" data-action="update" data-consecutivo="${data.data}" onclick="mostrarDetallePropietario(this)">Actualizar</button></td>
+                     <td><button type="button" class="btn btn-default" data-consecutivo="${data.data}" data-folio="${datos.folio}" data-info="Propietario" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
+                  </tr>`;
+
+
+                if($(tbody).find('.sinRegistros').length > 0){
+                    $(tbody).find('.sinRegistros').remove();
+                }
+                
+                $(tbody).append(renglon);
+                $(flechaRegreso).trigger('click');
+                alertaExito(data.response.message);
+            } else {
+                alertaError(data.response.message);
+            }
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
+
+/**
+ * @function updateMultiRegistroRepresentante
+ * @param  {string} url - url del service 
+ * @param  {string} action - accion a realizar 
+ * @param {JSON} representante - datos del multiResgitro
+ */
+function updateMultiRegistroRepresentante(url, action, representante, tbody, flechaRegreso) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: { action: action, representante: representante },
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+           
+            let datos = JSON.parse(representante).representante[0];
+            console.log(datos);
+            if (data.response.sucessfull) {
+               let renglon = $(tbody).find('.renglon'+datos.consecutivo);
+               renglon.children('td')[2].innerHTML =  datos.nombre_propietario_representante;
+
+               popArray(arregloDeRepresentantes,parseInt(datos.consecutivo), 'consecutivo');
+
+                arregloDeRepresentantes.push({
+                    consecutivo: parseInt(datos.consecutivo),
+                    curp_propietario_o_representante: datos.curp_propietario_o_representante,
+                    fin_periodo:  datos.fin_periodo.trim(),
+                    folio: datos.folio,
+                    inicio_periodo:   datos.inicio_periodo.trim(),
+                    nombre_propietario_representante: datos.nombre_propietario_representante,
+                    nombre_secretario_representante_legal: datos.nombre_secretario_representante_legal,
+                    nombre_tesorero: datos.nombre_tesorero,
+                    observaciones_administracion: datos.observaciones_administracion
+
+                });
+
+                console.log(arregloDeRepresentantes);
+                $(flechaRegreso).trigger('click');
+                alertaExito(data.response.message);
             } else {
                 alertaError(data.response.message);
             }
@@ -2158,10 +2301,6 @@ function validarFormularioImagen(element) {
         errorElement: 'span',
         wrapper: 'label',
         rules: {
-            url: {
-                required: true
-            },
-
             fecha: {
                 required: true,
                 empty: true,
@@ -2180,9 +2319,6 @@ function validarFormularioImagen(element) {
         },
 
         messages: {
-            url: {
-                required: 'Campo requerido'
-            },
 
             fecha: {
                 required: 'Campo requerido',
@@ -2530,95 +2666,85 @@ function validaFormularioRepresentante(element) {
         errorElement: 'span',
         wrapper: 'label',
         rules: {
-            nombrePropietario: {
+            nombre_propietario_representante: {
                 required: true,
                 empty: true,
                 maxlength: 255
             },
 
-            nombreSecretario: {
-                required: true,
-                empty: true,
+            nombre_secretario_representante_legal: {
                 maxlength: 255
             },
 
-            nombreTesorero: {
-                required: true,
-                empty: true,
+            nombre_tesorero: {
                 maxlength: 255
             },
 
-            curpPropietario: {
-                required: true,
-                empty: true,
+            curp_propietario_o_representante: {
                 maxlength: 255
             },
 
-            inicioPeriodo: {
-                required: true,
-                empty: true,
+            inicio_periodo: {
                 maxlength: 255
             },
 
-            finPeriodo: {
-                required: true,
-                empty: true,
+            fin_periodo: {
                 maxlength: 255
             },
 
-            observacionesAdministracion: {
-                required: true,
-                empty: true,
+            observaciones_administracion: {
                 maxlength: 255
             }
         },
 
         messages: {
-            nombrePropietario: {
+            nombre_propietario_representante: {
                 required: 'Campo requerido',
                 empty: 'No deje espacios vacios',
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            nombreSecretario: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            nombre_secretario_representante_legal: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            nombreTesorero: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            nombre_tesorero: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            curpPropietario: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            curp_propietario_o_representante: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            inicioPeriodo: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            inicio_periodo: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            finPeriodo: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            fin_periodo: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            observacionesAdministracion: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            observaciones_administracion: {
                 maxlength: 'Maximo 255 caracteres'
             }
         },
 
         submitHandler: function(form) {
-            alert('Todo ben para representante');
+            
+            let datos = { 'representante' : []};
+            let operacion = $(form).attr('data-action') || '';
+            datos.representante.push($(form).serializeObject());
+
+            if( operacion == 'add'){
+              insertMultiRegistroRepresentante(urlConexionMultiRegistro,'insertMultiregistroRepresentante',JSON.stringify(datos),'#tbodyTablaPropietario','#flechaRegreso');
+               
+            }else if(operacion == 'update'){
+               updateMultiRegistroRepresentante(urlConexionMultiRegistro,'updateMultiregistroRepresentante',JSON.stringify(datos),'#tbodyTablaPropietario','#flechaRegreso');
+            }else{
+              alert('Acción no disponible');
+            }
+
+
             return false;
         }
     });
@@ -2660,18 +2786,12 @@ function validaFormulario(element) {
                 maxlength: 200
             },
 
-            tipoTenenciaTierra: {
-                valueNotEquals: '-1'
-            },
-
             latitud: {
-                required: true,
                 numeros: true,
                 maxlength: 7
             },
 
             longitud: {
-                required: true,
                 numeros: true,
                 maxlength: 7
             },
@@ -2692,9 +2812,6 @@ function validaFormulario(element) {
                 decimales: true
             },
 
-            estatusPredio: {
-                valueNotEquals: '-1'
-            },
 
             registroForestalNacional: {
                 maxlength: 30
@@ -2728,18 +2845,12 @@ function validaFormulario(element) {
                 maxlength: 'Maximo 200 caracteres'
             },
 
-            tipoTenenciaTierra: {
-                valueNotEquals: 'Seleccione una opción'
-            },
-
             latitud: {
-                required: 'Campo requerido',
                 numeros: 'Ingrese solo números',
                 maxlength: 'Maximo 7 caracteres'
             },
 
             longitud: {
-                required: 'Campo requerido',
                 numeros: 'Ingrese solo números',
                 maxlength: 'Maximo 7 caracteres'
             },
