@@ -19,6 +19,7 @@
   const urlConexionCatalogos =  url+'Probosque/CargaInicial';
   const urlConexionPredios =   url+'Probosque/Predios';
   const urlConexionMultiRegistro =   url+'Probosque/MultiRegistro';
+  const urlconexionArchivo =  url+'Probosque/Archivo';
   const urlConexionService =  url+'ServiceBosque/AuditoriasPreventivas';
 
 
@@ -116,6 +117,12 @@
   * @type {Array.<PredioPoligonosDTO>} arregloDePoligonos 
   */
   let arregloDePoligonos; 
+
+/**
+  * @constant
+  * @type {Array.<MultiRegistroImagenesDTO>} arregloDeImagenes 
+  */
+  let arregloDeImagenes; 
 
 
 /**
@@ -448,6 +455,9 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
 
 btnAccion.on('click', function(){
      let action = $(this).attr('data-info');
+      arregloDeRepresentantes = [];
+      arregloDePoligonos = [];
+      arregloDeImagenes = [];
 
      (action == 'addPredio')? agregarPredio('Consultar un predio','findPredio'): buscarPredio('Agregar predio','addPredio');
 });
@@ -507,7 +517,7 @@ panelFicha.on('click','.btn-delete',function(){
         allowOutsideClick: false,
         allowEnterKey: false
     }).then(function() {
-        alert('Se esta elimminando');
+        deletePredio(urlConexionPredios,clave);
     })
 });
 
@@ -775,10 +785,14 @@ function selectIdPredio(element) {
     
     $("#tabla tr").removeClass('seleccion');
     
+    arregloDeRepresentantes = [];
+    arregloDePoligonos = [];
+    arregloDeImagenes = [];
 
     if (tiene) {
         $("#" + clave).removeClass('seleccion');
         multiregistroBandera = false;
+
         resetFormulario();
     } else {
         
@@ -1228,18 +1242,17 @@ function plantillaImagenes(arr){
                      <td>:consecutivo:</td>
                      <td>:descripcion:</td>
                      <td>:fecha:</td>
-                     <td><a href="#" download="/:url:/">Ver Imagen</a></td>
+                     <td><a href="#" nombrearchivo=":nombreArchivo:" onclick="getImagen(this)">Ver Imagen</a></td>
                      <td>:campoAsociado:</td>
-                     <td><button type="button" class="btn btn-success" data-action="update" data-consecutivo=":consecutivo:" onclick="mostrarDetalleImagen(this)">Actualizar</button></td>
                      <td><button type="button" class="btn btn-default" data-consecutivo=":consecutivo:" data-folio=":folio:" data-info="Imagen" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
                   </tr>`;
 
     arr.forEach(function(value){
         renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(':descripcion:',value.descripcion).replace(':fecha:',value.fecha)
-                    .replace(/:url:/,value.url).replace(':campoAsociado:',value.campoasociado).replace(/:folio:/g,value.folio);
+                    .replace(/:url:/,value.url).replace(':campoAsociado:',value.descripcion_campo).replace(/:folio:/g,value.folio).replace(/:nombreArchivo:/g,value.nombre_archivo);
     });
 
-    renglones= (renglones == '')? `<tr><td colspan="7"><center>No hay datos registrados</center></td></tr>`: renglones;
+    renglones= (renglones == '')? `<tr class="sinRegistros"><td colspan="6"><center>No hay datos registrados</center></td></tr>`: renglones;
     let html = `<div class="table-responsive table-striped table-bordered table-hover">
                     <table class="table">
                         <thead>
@@ -1249,7 +1262,6 @@ function plantillaImagenes(arr){
                             <th>Fecha</th>
                             <th>Imagen</th>
                             <th>Campo Asociado</th>
-                            <th>Actualizar</th>
                             <th>Eliminar</th>
                           </tr>
                         </thead>
@@ -1269,13 +1281,15 @@ function plantillaImagenes(arr){
  */
 
 function mostrarDetalleImagen(element) {
-    detalleMultiRegistro.html(plantillaDetalleImagen.call(arregloDeImagenes, element));
+    let argCampos =  JSON.parse(JSON.stringify(catalogosCampos));
+    detalleMultiRegistro.html(plantillaDetalleImagen.call(arregloDeImagenes, element, argCampos));
     addOptionMultiRegistro.hide();
     tituloModal.html('Imagenes');
     flechaRegreso.attr('data-option', 'detalleMultiRegistro');
     flechaRegreso.show();
     multiRegistros.hide();
     detalleMultiRegistro.show();
+
     agregaCalendario('.fechaImagen','down');
     validarFormularioImagen('#formularioImagen');
 }
@@ -1418,13 +1432,15 @@ function plantillaDetalleRepresentante(element){
 /**
  * @function plantillaDetalleImagen
  * @param  {object} element - objecto  DOM
+ * @param {Array} arregloCampos - catalogos de campos
  * @return  {String} Retorno el formulario lleno con los detalles
  */
-function plantillaDetalleImagen(element){
+function plantillaDetalleImagen(element , arregloCampos){
     let option = $(element).attr('data-action');
     let valueFolio =  ''; 
     let botones = '';
     let display = '';
+    let operacion = '';
     
     self = '';
     
@@ -1432,10 +1448,14 @@ function plantillaDetalleImagen(element){
 
         botones = '<button type="submit" id="agregarMultiImagen" class="btn btn-success">Agregar multiregistro</button>';
         display= 'style="display:none"';
+        operacion = 'add';
+
         valueFolio = $(element).attr('data-info');
+
 
     }else if(option == 'update'){
         botones = '<button type="submit" id="actualizarMultiImagen" class="btn btn-success">Actualizar</button>';
+        operacion = 'update';
 
         let consecutivo = parseInt($(element).attr('data-consecutivo'));
     
@@ -1446,7 +1466,7 @@ function plantillaDetalleImagen(element){
     }
 
 
-    let formulario =`<form id="formularioImagen" onsubmit="return false" autocomplete="off">
+    let formulario =`<form id="formularioImagen" onsubmit="return false" autocomplete="off" data-action="${operacion}" enctype="multipart/form-data">
                         <div class="form-group" ${display}>
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
@@ -1456,7 +1476,7 @@ function plantillaDetalleImagen(element){
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Folio</label>
-                                    <input type="text" class="form-control" name="folio" value="${getTexto(self.folio)}" readonly>
+                                    <input type="text" class="form-control" name="folio" value="${getTexto(valueFolio)}" readonly>
                                 </div>
                             </div>
                         </div> 
@@ -1479,15 +1499,14 @@ function plantillaDetalleImagen(element){
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Campo Asociado</label>
                                         <select name="campoAsociado" class="form-control">
-                                              ${contruirComboSimple([], self.campoasociado)}
+                                              ${contruirComboSimple(arregloCampos, self.campoasociado)}
                                         </select>
                                     </div>
 
                                      <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <div id="contenedorCambiarImagen">
-                                            <label>Url</label>
-                                            <input type="file" name="url" class="form-control">
-                                        </div>
+                                        <label>Archivo</label>
+                                        <input type="file" name="file" class="form-control">
+                                        <input type="hidden" value="insertMultiregistroImagen" name="action">
                                     </div>
                                 </div>
                             </div>
@@ -1651,23 +1670,25 @@ $('#btnhelpme').on('click',function(){
     let section = el.attr('data-info')|| '';
 
 
-    let helpMeAdd = `<b>Para agregar un predio</b><br>
-                      1.- <br>
-                      2.- <br>
-                      3.- <br>
-                      4.- <br>
-                      5.- `;
+    let helpMeAdd = `1.- Llene los campos del formulario. Los campos requeridos son:
+                          región, municipio, <br>localidad y permiso aprovechamiento forestal<br><br>
+                          
+                      2.- Haga clic en el boton <b>Agregar Predio</b><br><br>
+                        
+                       <b> Para agregar un multiregistro al predio debe primero guardar la Información del formulario principal</b><br>
+                       `;
 
-    let helpMeUpdate = ` <b>Para actualizar un predio</b><br>
-                            1.- <br>
-                            2.- <br>
-                            3.- <br>
-                            4.- <br>
-                            5.- `;
+    let helpMeUpdate = `<b>1.- Busque un predio en el panel de consulta</b><br>
+                          1.1- Seleccione el tipo de filtro "Predio" o "Representante"<br>
+                          1.2- Escriba el texto a buscar en la caja<br>
+                          1.3- Seleccione haciendo clic sobre el predio<br><br>
+                        <b>2.- Edite la información en el formulario principal</b><br>
+                          2.1- Haga clic en el boton actualizar<br>`;
 
     let help = (section == 'addPredio')?  helpMeUpdate : helpMeAdd;
+    let title = (section == 'addPredio')? '¿Como actualizar predio?' :  '¿Como agregar predio?';
 
-    alertaInfo('',help,'Ayuda');
+    alertaInfo('',help, title);
 });
 
 /**
@@ -1837,6 +1858,43 @@ function getPredios(texto,accion,url) {
 }
 
 
+function getImagen(el){
+    let nombre= $(el).attr('nombrearchivo') || '';
+
+    (nombre != '')? getImagenFile(urlconexionArchivo,nombre) :  alertaError('Error al consultar imagen');
+}
+
+
+/**
+ * @function getImagenFile
+ * @param  {string} nombre - Nombre de la imagen
+ * @param  {string} url - url del service 
+ */
+function getImagenFile(url,nombre) { 
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: {action:'get',nombre_archivo:nombre},
+        dataType: 'json',
+        beforeSend: function (data) {
+        },
+        success: function(data){
+            console.log(data);
+            if(data.response.sucessfull){
+               
+            }else{
+                alertaError(data.response.message);
+            }
+           
+        },
+        error: function(err) {
+             console.log(err);
+              alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');      
+        }
+
+    }); 
+}
+
 
 /**
  * @function getTodosDetallesPredio
@@ -1852,6 +1910,7 @@ function getTodosDetallesPredio(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
+           
             if(data.response.sucessfull){
                 abrirFicha(data.data[0]);
             }else{
@@ -1916,7 +1975,6 @@ function getPredioImagen(url,clave) {
         beforeSend: function (data) {
         },
         success: function(data){
-           
             if(data.response.sucessfull){
                 tituloModal.html('Imagenes');
                 flechaRegreso.attr({'data-option':'multiRegistros','data-seccion':'imagenes'});
@@ -2044,6 +2102,43 @@ function updatePredio(url,datosPredios) {
             
             if(data.response.sucessfull){
                 
+                alertaExito(data.response.message);
+
+            }else{
+                alertaError(data.response.message);
+            }
+           
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');         
+        }
+
+    }); 
+}
+
+
+/**
+ * @function deletePredio
+ * @param  {object JSON} url - direccion del servicio
+ */
+function deletePredio(url,clave) { 
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: {action:'deletePredio', claveUnicaIdentificacion: clave},
+        dataType: 'json',
+        beforeSend: function (data) {
+        },
+        success: function(data){
+            
+            if(data.response.sucessfull){
+                arregloDeRepresentantes = [];
+                arregloDePoligonos = [];
+                arregloDeImagenes = [];
+
+                $('#panelFicha').hide();
+                $('#bodyPanelFicha').empty();
+                $('#bodyAllPredios').find('#'+clave).remove();
                 alertaExito(data.response.message);
 
             }else{
@@ -2221,6 +2316,73 @@ function insertMultiRegistroRepresentante(url, action, representante, tbody, fle
 }
 
 
+
+/**
+ * @function insertMultiRegistroImagen
+ * @param  {string} url - url del service 
+ * @param  {string} action - accion a realizar
+ * @param  {JSON} representante - datos del formulario 
+ * @param  {string} tbody - selector de la tabla multiregistro
+ * @param  {string} flechaRegreso - selector de la flecha
+ * @param {JSON} representante - datos del multiResgitro
+ */
+function insertMultiRegistroImagen(url, action, imagenes, tbody, flechaRegreso) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: imagenes,
+        enctype: 'multipart/form-data',
+        async: false,
+        cache: false,
+        contentType: false,
+        processData: false,
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+
+            if (data.response.sucessfull) {
+                let datos = data.data;
+                arregloDeImagenes.push({
+                    consecutivo: parseInt(datos.consecutivo),
+                    descripcion: datos.descripcion,
+                    descripcion_campo: datos.descripcion_campo,
+                    fecha: datos.fecha,
+                    folio: datos.folio,
+                    id_campoasociado:  datos.id_campoasociado,
+                    nombre_archivo: datos.nombre_archivo,
+                    url: datos.url
+
+                });
+
+                let renglon = `<tr class="renglon${datos.consecutivo}">
+                     <td>${datos.consecutivo}</td>
+                     <td>${datos.descripcion}</td>
+                     <td>${datos.fecha}</td>
+                     <td><a href="#" nombrearchivo="${datos.nombre_archivo}" onclick="getImagen(this)">Ver Imagen</a></td>
+                     <td>${datos.descripcion_campo}</td>
+                     <td><button type="button" class="btn btn-default" data-consecutivo="${datos.consecutivo}" data-folio="${datos.folio}" data-info="Imagen" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
+                </tr>`;
+
+
+                if($(tbody).find('.sinRegistros').length > 0){
+                    $(tbody).find('.sinRegistros').remove();
+                }
+                
+                $(tbody).append(renglon);
+                $(flechaRegreso).trigger('click');
+                alertaExito(data.response.message);
+            } else {
+                alertaError(data.response.message);
+            }
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
+
 /**
  * @function insertMultiRegistroPoligonos
  * @param  {string} url - url del service 
@@ -2243,7 +2405,7 @@ function insertMultiRegistroPoligonos(url, action, poligono, tbody, flechaRegres
             if (data.response.sucessfull) {
 
                arregloDePoligonos.push({
-                            consecutivo: data.data,
+                            consecutivo: parseInt(data.data),
                             folio: datos.folio,
                             accion_agraria: datos.accion_agraria,
                             fecha_publicacion_dof: datos.fecha_publicacion_dof,
@@ -2488,6 +2650,7 @@ var alertaExito = function(mensaje) {
 ******************************************************************************************************
 *****************************************************************************************************/
 
+
 /*
  * @function validarFormularioImagen
  * @param {Object jquery} element - Es el id del formulario de imagenes
@@ -2500,6 +2663,9 @@ function validarFormularioImagen(element) {
         errorElement: 'span',
         wrapper: 'label',
         rules: {
+            file: {
+                required: true
+            },
             fecha: {
                 required: true,
                 empty: true,
@@ -2518,7 +2684,9 @@ function validarFormularioImagen(element) {
         },
 
         messages: {
-
+            file:{
+               required: 'Campo requerido'
+            },
             fecha: {
                 required: 'Campo requerido',
                 empty: 'No deje espacios vacios',
@@ -2537,6 +2705,20 @@ function validarFormularioImagen(element) {
         },
 
         submitHandler: function(form) {
+
+            let operacion = $(form).attr('data-action') || '';
+           
+
+            if( operacion == 'add'){
+               let  formData = new FormData($(form)[0]);
+               insertMultiRegistroImagen(urlConexionMultiRegistro,'insertMultiregistroImagen',formData,'#tbodyTablaImagen','#flechaRegreso');
+            }else if(operacion == 'update'){
+               alert('Accion no habilitada');
+            }else{
+              alert('Acción no disponible');
+            }
+
+
             return false;
         }
     });
