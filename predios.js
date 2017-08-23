@@ -205,6 +205,26 @@
   * @type {array} catalogosLocalidades 
   */
   var catalogosLocalidades;
+  
+  /**
+  * @type {array} catalogosClima 
+  */
+  var catalogosClima
+
+  /**
+  * @type {array} catalogosEspecies 
+  */
+  var catalogosEspecies
+
+  /**
+  * @type {array} catalogosCampos 
+  */
+  var catalogosCampos
+
+  /**
+  * @type {array} catalogosVegetacion 
+  */
+  var catalogosVegetacion
 
 
 /**
@@ -896,7 +916,7 @@ function plantillaPoligonos(arr){
         renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).replace(/:folio:/g,value.folio).replace(':accion_agraria:',value.accion_agraria);
     });
 
-    renglones= (renglones == '')? `<tr><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
+    renglones= (renglones == '')? `<tr class="sinRegistros"><td colspan="5"><center>No hay datos registrados</center></td></tr>`: renglones;
     let html = `<div class="table-responsive table-striped table-bordered table-hover">
                     <table class="table">
                         <thead>
@@ -924,7 +944,11 @@ function plantillaPoligonos(arr){
  * @param  {object} element - objecto  DOM
  */
 function mostrarDetallePoligono(element){
-    detalleMultiRegistro.html(plantillaDetallePoligono.call(arregloDePoligonos, element));
+
+    let catalogVegetacion = JSON.parse(JSON.stringify(catalogosVegetacion));
+    let catalogClima = JSON.parse(JSON.stringify(catalogosClima));
+    let catalogEspecies = JSON.parse(JSON.stringify(catalogosEspecies));
+    detalleMultiRegistro.html(plantillaDetallePoligono.call(arregloDePoligonos, element,catalogVegetacion,catalogEspecies,catalogClima));
     tituloModal.html('Poligonos');
     flechaRegreso.attr('data-option', 'detalleMultiRegistro');
     flechaRegreso.show();
@@ -942,21 +966,26 @@ function mostrarDetallePoligono(element){
  * @param  {object} element - objecto  DOM
  * @return  {String} Retorno el formulario lleno con los detalles
  */
-function plantillaDetallePoligono(element){
+function plantillaDetallePoligono(element, cVegetacion, cEspecies, cClima){
     let option = $(element).attr('data-action');
     let valueFolio =  ''; 
     let botones = '';
     let display = '';
+    let opcionEjecutar = '';
     
     self = '';
     
     if(option == 'agregar'){
 
+        opcionEjecutar= 'add';
         botones = '<button type="submit" id="agregarMultiPoligono" class="btn btn-success">Agregar multiregistro</button>';
         display= 'style="display:none"';
         valueFolio = $(element).attr('data-info');
 
     }else if(option == 'update'){
+
+        opcionEjecutar= 'update';
+
         botones = '<button type="submit" id="actualizarMultiPoligono" class="btn btn-success">Actualizar</button>';
 
         let consecutivo = parseInt($(element).attr('data-consecutivo'));
@@ -969,7 +998,7 @@ function plantillaDetallePoligono(element){
 
     
     
-    let formulario =`<form id="formularioPoligono" onsubmit="return false" autocomplete="off">
+    let formulario =`<form id="formularioPoligono" onsubmit="return false" autocomplete="off" data-action="${opcionEjecutar}">
                         <div class="form-group" ${display}>
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
@@ -979,7 +1008,7 @@ function plantillaDetallePoligono(element){
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Folio</label>
-                                    <input type="text" class="form-control" name="folio" value="${getTexto(self.folio)}" readonly>
+                                    <input type="text" class="form-control" name="folio" value="${getTexto(valueFolio)}" readonly>
                                 </div>
                             </div>
                         </div> 
@@ -988,12 +1017,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Acción agraria</label>
-                                    <input type="text" class="form-control" name="accionAgraria" value="${getTexto(self.accion_agraria)}">
+                                    <input type="text" class="form-control" name="accion_agraria" value="${getTexto(self.accion_agraria)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de publicación en el DOF</label>
-                                    <input type="text" class="form-control fechaPublicacionDof" name="fechaPublicacionDof" value="${getTexto(self.fecha_publicacion_dof)}">
+                                    <input type="text" class="form-control fechaPublicacionDof" name="fecha_publicacion_dof" value="${getTexto(self.fecha_publicacion_dof)}">
                                 </div>
                             </div>
                         </div>  
@@ -1002,12 +1031,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de resolución presidencial</label>
-                                    <input type="text" class="form-control fechaResolucionPresidencial" name="fechaResolucionPresidencial" value="${getTexto(self.fecha_resolucion_presidencial)}">
+                                    <input type="text" class="form-control fechaResolucionPresidencial" name="fecha_resolucion_presidencial" value="${getTexto(self.fecha_resolucion_presidencial)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de asamblea de procede</label>
-                                    <input type="text" class="form-control fechaAsambleaProcede" name="fechaAsambleaProcede" value="${getTexto(self.fecha_asamblea_procede)}">
+                                    <input type="text" class="form-control fechaAsambleaProcede" name="fecha_asamblea_procede" value="${getTexto(self.fecha_asamblea_procede)}">
                                 </div>
                             </div>
                         </div> 
@@ -1016,12 +1045,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Documento que ampara la propiedad</label>
-                                    <input type="text" class="form-control" name="documentoAmparaPropiedad" value="${getTexto(self.documento_ampara_propiedad)}">
+                                    <input type="text" class="form-control" name="documento_ampara_propiedad" value="${getTexto(self.documento_ampara_propiedad)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Número del documento que ampara la propiedad</label>
-                                    <input type="text" class="form-control" name="numeroDocumentoAmparaPropiedad" value="${getTexto(self.numero_documento_ampara_propiedad)}" >
+                                    <input type="text" class="form-control" name="numero_documento_ampara_propiedad" value="${getTexto(self.numero_documento_ampara_propiedad)}" >
                                 </div>
                             </div>
                         </div>   
@@ -1044,12 +1073,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Superficie del polígono (Ha)</label>
-                                    <input type="text" class="form-control" name="superficiePoligono" value="${getTexto(self.superficie_poligono)}">
+                                    <input type="text" class="form-control" name="superficie_poligono" value="${getTexto(self.superficie_poligono)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Superficie cartográfica (Ha)</label>
-                                    <input type="text" class="form-control" name="superficieCartografica" value="${getTexto(self.superficie_cartografica)}">
+                                    <input type="text" class="form-control" name="superficie_cartografica" value="${getTexto(self.superficie_cartografica)}">
                                 </div>
                             </div>
                         </div>  
@@ -1058,12 +1087,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Superficie arbolada (Ha)</label>
-                                    <input type="text" class="form-control" name="superficieArbolada" value="${getTexto(self.superficie_arbolada)}">
+                                    <input type="text" class="form-control" name="superficie_arbolada" value="${getTexto(self.superficie_arbolada)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Superficie otros usos (Ha)</label>
-                                    <input type="text" class="form-control" name="superficieOtrosUsos" value="${getTexto(self.superficie_otros_usos)}">
+                                    <input type="text" class="form-control" name="superficie_otros_usos" value="${getTexto(self.superficie_otros_usos)}">
                                 </div>
                             </div>
                         </div>  
@@ -1072,15 +1101,15 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Tipo de clima</label>
-                                    <select name="tipoClima" class="form-control">
-                                          ${contruirComboSimple([], self.id_tipo_clima)}
+                                    <select name="tipo_clima" class="form-control">
+                                          ${contruirComboSimple(cClima, self.id_tipo_clima)}
                                     </select>
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Tipo de vegetación</label>
-                                     <select name="tipoVegetacion" class="form-control">
-                                           ${contruirComboSimple([], self.id_tipo_vegetacion)}
+                                     <select name="tipo_vegetacion" class="form-control">
+                                           ${contruirComboSimple(cVegetacion, self.id_tipo_vegetacion)}
                                      </select> 
                                 </div>
                             </div>
@@ -1090,12 +1119,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Tipo de fisiografía</label>
-                                    <input type="text" class="form-control" name="tipoFisiografia" value="${getTexto(self.tipo_fisiografia)}">
+                                    <input type="text" class="form-control" name="tipo_fisiografia" value="${getTexto(self.tipo_fisiografia)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Corrientes intermitentes</label>
-                                    <input type="text" class="form-control" name="corrientesIntermitentes" value="${getTexto(self.corrientes_intermitentes)}">
+                                    <input type="text" class="form-control" name="corrientes_intermitentes" value="${getTexto(self.corrientes_intermitentes)}">
                                 </div>
                             </div>
                         </div>
@@ -1104,12 +1133,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Corrientes permanentes</label>
-                                    <input type="text" class="form-control" name="corrientesPermanentes" value="${getTexto(self.corrientes_permanentes)}">
+                                    <input type="text" class="form-control" name="corrientes_permanentes" value="${getTexto(self.corrientes_permanentes)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Manantiales y/u ojos de agua</label>
-                                    <input type="text" class="form-control" name="manantialesOjoAgua" value="${getTexto(self.manantiales_ojos_agua)}">
+                                    <input type="text" class="form-control" name="manantiales_ojos_agua" value="${getTexto(self.manantiales_ojos_agua)}">
                                 </div>
                             </div>
                         </div>
@@ -1118,7 +1147,7 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Manantiales y/u ojos de agua que abastecen</label>
-                                    <input type="text" class="form-control" name="manantialesOjoAguaAbastecen" value="${getTexto(self.manantiales_ojos_agua_abastecen)}">
+                                    <input type="text" class="form-control" name="manantiales_ojos_agua_abastecen" value="${getTexto(self.manantiales_ojos_agua_abastecen)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
@@ -1132,14 +1161,14 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Especies arbóreas</label>
-                                    <select name="especiesArboreas" class="form-control">
-                                           ${contruirComboSimple([], self.id_especies_arboreas)}
+                                    <select name="especies_arboreas" class="form-control">
+                                           ${contruirComboSimple(cEspecies, self.id_especies_arboreas)}
                                      </select> 
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Distribución del estrato arbustivo</label>
-                                    <input type="text" name="distribucionEstratoArbustivo" class="form-control" value="${getTexto(self.distribucion_estrato_arbustivo)}">
+                                    <input type="text" name="distribucion_estrato_arbustivo" class="form-control" value="${getTexto(self.distribucion_estrato_arbustivo)}">
                                 </div>
                             </div>
                         </div>
@@ -1148,12 +1177,12 @@ function plantillaDetallePoligono(element){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Distribución de renuevo</label>
-                                    <input type="text" class="form-control" name="distribucionRenuevo" value="${getTexto(self.distribucion_renuevo)}">
+                                    <input type="text" class="form-control" name="distribucion_renuevo" value="${getTexto(self.distribucion_renuevo)}">
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Cobertura promedio del arbolado</label>
-                                    <input type="text" class="form-control" name="coberturaPromedioArbolado" value="${getTexto(self.cobertura_promedio_arbolado)}">
+                                    <input type="text" class="form-control" name="cobertura_promedio_arbolado" value="${getTexto(self.cobertura_promedio_arbolado)}">
                                 </div>
                             </div>
                         </div>
@@ -1167,7 +1196,7 @@ function plantillaDetallePoligono(element){
 
                                 <div class="col-md-6 col-sm-6">
                                     <label>Observaciones del polígono</label>
-                                    <input type="text" class="form-control" name="observacionesPoligono" value="${getTexto(self.observaciones_poligono)}">
+                                    <input type="text" class="form-control" name="observaciones_poligono" value="${getTexto(self.observaciones_poligono)}">
                                 </div>
                             </div>
                         </div>
@@ -2012,7 +2041,7 @@ function updatePredio(url,datosPredios) {
         beforeSend: function (data) {
         },
         success: function(data){
-            console.log(data);
+            
             if(data.response.sucessfull){
                 
                 alertaExito(data.response.message);
@@ -2064,11 +2093,20 @@ function cargaCatalogos(url, action, tableName) {
                         catalogosAceptableAaprovechamiento = objecto[index].catalogo;
                     } else if (value.name_catalog == 'catalogos.estatus') {
                         catalogosEstatus = objecto[index].catalogo;
-                    } else if(value.name_catalog == 'catalogos.localidad'){
+                    } else if (value.name_catalog == 'catalogos.localidad') {
                         catalogosLocalidades = objecto[index].catalogo;
-                    }else if(value.name_catalog == 'catalogos.region'){
+                    } else if (value.name_catalog == 'catalogos.region') {
                         catalogosRegiones = objecto[index].catalogo;
+                    } else if (value.name_catalog == 'catalogos.clima') {
+                        catalogosClima = objecto[index].catalogo;
+                    } else if (value.name_catalog == 'catalogos.especie') {
+                        catalogosEspecies = objecto[index].catalogo;
+                    } else if (value.name_catalog == 'catalogos.campos') {
+                        catalogosCampos = objecto[index].catalogo;
+                    } else if (value.name_catalog == 'catalogos.vegetacionpredominante') {
+                        catalogosVegetacion = objecto[index].catalogo;
                     }
+
 
                 });
 
@@ -2107,8 +2145,6 @@ function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, t
                popArray(Arreglo,parseInt(consecutivo), 'consecutivo');
                tableBodyMultiRegistro.find('.renglon'+consecutivo).remove();
                alertaExito(data.response.message);
-
-               console.log(arregloDeRepresentantes);
             } else {
                 alertaError(data.response.message);
             }
@@ -2124,7 +2160,10 @@ function eliminaMultiRegistroAJAX(url, action, tableName, folio , consecutivo, t
 /**
  * @function insertMultiRegistroRepresentante
  * @param  {string} url - url del service 
- * @param  {string} action - accion a realizar 
+ * @param  {string} action - accion a realizar
+ * @param  {JSON} representante - datos del formulario 
+ * @param  {string} tbody - selector de la tabla multiregistro
+ * @param  {string} flechaRegreso - selector de la flecha
  * @param {JSON} representante - datos del multiResgitro
  */
 function insertMultiRegistroRepresentante(url, action, representante, tbody, flechaRegreso) {
@@ -2181,10 +2220,95 @@ function insertMultiRegistroRepresentante(url, action, representante, tbody, fle
     });
 }
 
+
+/**
+ * @function insertMultiRegistroPoligonos
+ * @param  {string} url - url del service 
+ * @param  {string} action - accion a realizar 
+ * @param  {JSON} poligono - datos del formulario
+ * @param  {string} tbody - selector de la tabla multiregistro
+ * @param  {string} flechaRegreso - selector de la flecha
+ * @param {JSON} representante - datos del multiResgitro
+ */
+function insertMultiRegistroPoligonos(url, action, poligono, tbody, flechaRegreso) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: { action: action, poligono: poligono },
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+            let datos = JSON.parse(poligono).poligono[0];
+
+            if (data.response.sucessfull) {
+
+               arregloDePoligonos.push({
+                            consecutivo: data.data,
+                            folio: datos.folio,
+                            accion_agraria: datos.accion_agraria,
+                            fecha_publicacion_dof: datos.fecha_publicacion_dof,
+                            fecha_resolucion_presidencial: datos.fecha_resolucion_presidencial,
+                            fecha_asamblea_procede: datos.fecha_asamblea_procede,
+                            documento_ampara_propiedad: datos.documento_ampara_propiedad,
+                            numero_documento_ampara_propiedad: datos.numero_documento_ampara_propiedad,
+                            latitud: datos.latitud,
+                            longitud: datos.longitud,
+                            superficie_poligono: datos.superficie_poligono,
+                            superficie_cartografica: datos.superficie_cartografica,
+                            superficie_arbolada: datos.superficie_arbolada,
+                            superficie_otros_usos: datos.superficie_otros_usos,
+                            id_tipo_clima: datos.tipo_clima,
+                            id_tipo_vegetacion: datos.tipo_vegetacion,
+                            tipo_fisiografia: datos.tipo_fisiografia,
+                            corrientes_intermitentes: datos.corrientes_intermitentes,
+                            corrientes_permanentes: datos.corrientes_permanentes,
+                            manantiales_ojos_agua: datos.manantiales_ojos_agua,
+                            manantiales_ojos_agua_abastecen: datos.manantiales_ojos_agua_abastecen,
+                            erosion: datos.erosion,
+                            id_especies_arboreas: datos.especies_arboreas,
+                            distribucion_estrato_arbustivo: datos.distribucion_estrato_arbustivo,
+                            distribucion_renuevo: datos.distribucion_renuevo,
+                            cobertura_promedio_arbolado: datos.cobertura_promedio_arbolado,
+                            fauna: datos.fauna,
+                            observaciones_poligono: datos.observaciones_poligono
+                });
+
+
+                let renglon = `<tr class="renglon${data.data}">
+                     <td>${data.data}</td>
+                     <td>${datos.folio}</td>
+                     <td>${datos.accion_agraria}</td>
+                     <td><button type="button" class="btn btn-success" data-action="update" data-consecutivo="${data.data}" onclick="mostrarDetallePoligono(this)">Actualizar</button></td>
+                     <td><button type="button" class="btn btn-default" data-consecutivo="${data.data}" data-folio="${datos.folio}" data-info="Poligono" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
+                  </tr>`;
+
+                if($(tbody).find('.sinRegistros').length > 0){
+                    $(tbody).find('.sinRegistros').remove();
+                }
+                
+                $(tbody).append(renglon);
+                $(flechaRegreso).trigger('click');
+                alertaExito(data.response.message);
+            } else {
+                alertaError(data.response.message);
+            } 
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
+
+
 /**
  * @function updateMultiRegistroRepresentante
  * @param  {string} url - url del service 
  * @param  {string} action - accion a realizar 
+ * @param  {JSON} representante - datos del formulario 
+ * @param  {string} tbody - selector de la tabla multiregistro
+ * @param  {string} flechaRegreso - selector de la flecha
  * @param {JSON} representante - datos del multiResgitro
  */
 function updateMultiRegistroRepresentante(url, action, representante, tbody, flechaRegreso) {
@@ -2197,7 +2321,7 @@ function updateMultiRegistroRepresentante(url, action, representante, tbody, fle
         success: function(data) {
            
             let datos = JSON.parse(representante).representante[0];
-            console.log(datos);
+            
             if (data.response.sucessfull) {
                let renglon = $(tbody).find('.renglon'+datos.consecutivo);
                renglon.children('td')[2].innerHTML =  datos.nombre_propietario_representante;
@@ -2217,7 +2341,82 @@ function updateMultiRegistroRepresentante(url, action, representante, tbody, fle
 
                 });
 
-                console.log(arregloDeRepresentantes);
+                
+                $(flechaRegreso).trigger('click');
+                alertaExito(data.response.message);
+            } else {
+                alertaError(data.response.message);
+            }
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
+
+
+
+/**
+ * @function updateMultiregistroPoligono
+ * @param  {string} url - url del service 
+ * @param  {string} action - accion a realizar 
+ * @param  {JSON} representante - datos del formulario 
+ * @param  {string} tbody - selector de la tabla multiregistro
+ * @param  {string} flechaRegreso - selector de la flecha
+ * @param {JSON} representante - datos del multiResgitro
+ */
+function updateMultiregistroPoligono(url, action, poligono, tbody, flechaRegreso) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: { action: action, poligono: poligono },
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+         
+            let datos = JSON.parse(poligono).poligono[0];
+            
+            if (data.response.sucessfull) {
+               let renglon = $(tbody).find('.renglon'+datos.consecutivo);
+               renglon.children('td')[2].innerHTML =  datos.accion_agraria;
+
+               popArray(arregloDePoligonos,parseInt(datos.consecutivo), 'consecutivo');
+
+                arregloDePoligonos.push({
+                    consecutivo: parseInt(datos.consecutivo),
+                    folio: datos.folio,
+                    accion_agraria: datos.accion_agraria,
+                    fecha_publicacion_dof: datos.fecha_publicacion_dof.trim(),
+                    fecha_resolucion_presidencial: datos.fecha_resolucion_presidencial.trim(),
+                    fecha_asamblea_procede: datos.fecha_asamblea_procede.trim(),
+                    documento_ampara_propiedad: datos.documento_ampara_propiedad,
+                    numero_documento_ampara_propiedad: datos.numero_documento_ampara_propiedad,
+                    latitud: datos.latitud,
+                    longitud: datos.longitud,
+                    superficie_poligono: datos.superficie_poligono,
+                    superficie_cartografica: datos.superficie_cartografica,
+                    superficie_arbolada: datos.superficie_arbolada,
+                    superficie_otros_usos: datos.superficie_otros_usos,
+                    id_tipo_clima: datos.tipo_clima,
+                    id_tipo_vegetacion: datos.tipo_vegetacion,
+                    tipo_fisiografia: datos.tipo_fisiografia,
+                    corrientes_intermitentes: datos.corrientes_intermitentes,
+                    corrientes_permanentes: datos.corrientes_permanentes,
+                    manantiales_ojos_agua: datos.manantiales_ojos_agua,
+                    manantiales_ojos_agua_abastecen: datos.manantiales_ojos_agua_abastecen,
+                    erosion: datos.erosion,
+                    id_especies_arboreas: datos.especies_arboreas,
+                    distribucion_estrato_arbustivo: datos.distribucion_estrato_arbustivo,
+                    distribucion_renuevo: datos.distribucion_renuevo,
+                    cobertura_promedio_arbolado: datos.cobertura_promedio_arbolado,
+                    fauna: datos.fauna,
+                    observaciones_poligono: datos.observaciones_poligono
+
+                });
+
+                
                 $(flechaRegreso).trigger('click');
                 alertaExito(data.response.message);
             } else {
@@ -2355,297 +2554,207 @@ function validaFormularioPoligono(element) {
         errorElement: 'span',
         wrapper: 'label',
         rules: {
-            accionAgraria: {
+            accion_agraria: {
+                maxlength: 255
+            },
+
+            fecha_publicacion_dof: {
+            },
+
+            fecha_resolucion_presidencial: {
+            },
+
+            fecha_asamblea_procede: {                
+            },
+
+            documento_ampara_propiedad: {
                 required: true,
                 empty: true,
                 maxlength: 255
             },
 
-            fechaPublicacionDof: {
-                required: true,
-                empty: true
-            },
-
-            fechaResolucionPresidencial: {
-                required: true,
-                empty: true
-            },
-
-            fechaAsambleaProcede: {
-                required: true,
-                empty: true
-            },
-
-            documentoAmparaPropiedad: {
-                required: true,
-                empty: true,
-                maxlength: 255
-            },
-
-            numeroDocumentoAmparaPropiedad: {
-                required: true,
-                empty: true,
+            numero_documento_ampara_propiedad: {
                 maxlength: 255
             },
 
             latitud: {
-                required: true,
-                numeros: true,
                 maxlength: 7
             },
 
             longitud: {
-                required: true,
-                numeros: true,
                 maxlength: 7
             },
 
-            superficiePoligono: {
-                required: true,
+            superficie_poligono: {
                 decimales: true
             },
 
-            superficieCartografica: {
-                required: true,
+            superficie_cartografica: {
                 decimales: true
             },
 
-            superficieArbolada: {
-                required: true,
+            superficie_arbolada: {
                 decimales: true
             },
 
-            superficieOtrosUsos: {
-                required: true,
+            superficie_otros_usos: {
                 decimales: true
             },
 
-            tipoClima: {
-                valueNotEquals: '-1'
-            },
-
-            tipoVegetacion: {
-                valueNotEquals: '-1'
-            },
-
-            tipoFisiografia: {
-                required: true,
-                empty: true,
+            tipo_fisiografia: {
                 maxlength: 255
             },
 
-            corrientesIntermitentes: {
-                required: true,
-                empty: true,
+            corrientes_intermitentes: {
                 maxlength: 255
             },
 
-            corrientesPermanentes: {
-                required: true,
-                empty: true,
+            corrientes_permanentes: {
                 maxlength: 255
             },
 
-            manantialesOjoAgua: {
-                required: true,
-                empty: true,
+            manantiales_ojos_agua: {
                 maxlength: 255
             },
 
-            manantialesOjoAguaAbastecen: {
-                required: true,
-                empty: true,
+            manantiales_ojos_agua_abastecen: {
                 maxlength: 255
             },
 
             erosion: {
-                required: true,
-                empty: true,
                 maxlength: 255
             },
 
-            especiesArboreas: {
-                valueNotEquals: '-1'
-            },
 
-            distribucionEstratoArbustivo: {
-                required: true,
-                empty: true,
+            distribucion_estrato_arbustivo: {
                 maxlength: 255
             },
 
-            distribucionRenuevo: {
-                required: true,
-                empty: true,
+            distribucion_renuevo: {
                 maxlength: 255
             },
 
-            coberturaPromedioArbolado: {
-                required: true,
-                empty: true,
+            cobertura_promedio_arbolado: {
                 maxlength: 255
             },
 
             fauna: {
-                required: true,
-                empty: true,
                 maxlength: 255
             },
 
-            observacionesPoligono: {
-                required: true,
-                empty: true,
+            observaciones_poligono: {
                 maxlength: 255
             }
         },
 
         messages: {
-            accionAgraria: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            accion_agraria: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            fechaPublicacionDof: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios'
+            fecha_publicacion_dof: {
             },
 
-            fechaResolucionPresidencial: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios'
+            fecha_resolucion_presidencial: {
             },
 
-            fechaAsambleaProcede: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios'
+            fecha_asamblea_procede: {
             },
 
-            documentoAmparaPropiedad: {
+            documento_ampara_propiedad: {
                 required: 'Campo requerido',
                 empty: 'No deje espacios',
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            numeroDocumentoAmparaPropiedad: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios',
+            numero_documento_ampara_propiedad: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
             latitud: {
-                required: 'Campo requerido',
-                numeros: 'Ingrese solo números',
                 maxlength: 'Maximo 7 caracteres'
             },
 
             longitud: {
-                required: 'Campo requerido',
-                numeros: 'Ingrese solo números',
                 maxlength: 'Maximo 7 caracteres'
             },
 
-            superficiePoligono: {
-                required: 'Campo requerido',
+            superficie_poligono: {
                 decimales: 'Ingrese formato correcto 0.00'
             },
 
-            superficieCartografica: {
-                required: 'Campo requerido',
+            superficie_cartografica: {
                 decimales: 'Ingrese formato correcto 0.00'
             },
 
-            superficieArbolada: {
-                required: 'Campo requerido',
+            superficie_arbolada: {
                 decimales: 'Ingrese formato correcto 0.00'
             },
 
-            superficieOtrosUsos: {
-                required: 'Campo requerido',
+            superficie_otros_usos: {
                 decimales: 'Ingrese formato correcto 0.00'
             },
 
-            tipoClima: {
-                valueNotEquals: 'Seleccione una opción'
-            },
-
-            tipoVegetacion: {
-                valueNotEquals: 'Seleccione una opción'
-            },
-
-            tipoFisiografia: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            tipo_fisiografia: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            corrientesIntermitentes: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            corrientes_intermitentes: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            corrientesPermanentes: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            corrientes_permanentes: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            manantialesOjoAgua: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            manantiales_ojos_agua: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            manantialesOjoAguaAbastecen: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            manantiales_ojos_agua_abastecen: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
             erosion: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            especiesArboreas: {
-                valueNotEquals: 'Seleccione una opción'
-            },
 
-            distribucionEstratoArbustivo: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            distribucion_estrato_arbustivo: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            distribucionRenuevo: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            distribucion_renuevo: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            coberturaPromedioArbolado: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            cobertura_promedio_arbolado: {
                 maxlength: 'Maximo 255 caracteres'
             },
 
             fauna: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
                 maxlength: 'Maximo 255 caracteres'
             },
 
-            observacionesPoligono: {
-                required: 'Campo requerido',
-                empty: 'No deje espacios vacios',
+            observaciones_poligono: {
                 maxlength: 'Maximo 255 caracteres'
             }
         },
 
         submitHandler: function(form) {
-            alert('Todo bien para poligonos');
+                        
+            let datos = { 'poligono' : []};
+            let operacion = $(form).attr('data-action') || '';
+            datos.poligono.push($(form).serializeObject());
+
+            if( operacion == 'add'){
+               insertMultiRegistroPoligonos(urlConexionMultiRegistro,'insertMultiregistroPoligono',JSON.stringify(datos),'#tbodyTablaPoligono','#flechaRegreso');
+            }else if(operacion == 'update'){
+              updateMultiregistroPoligono(urlConexionMultiRegistro,'updateMultiregistroPoligono',JSON.stringify(datos),'#tbodyTablaPoligono','#flechaRegreso');
+            }else{
+              alert('Acción no disponible');
+            }
+
             return false;
         }
     });
@@ -3043,6 +3152,14 @@ function catalogos() {
                catalogosLocalidades = objecto[index].catalogo;
             }else if(value.name_catalog == 'catalogos.region'){
                catalogosRegiones = objecto[index].catalogo;
+            }else if(value.name_catalog == 'catalogos.clima'){
+                catalogosClima =  objecto[index].catalogo;
+            }else if(value.name_catalog == 'catalogos.especie'){
+                 catalogosEspecies =  objecto[index].catalogo;
+            }else if(value.name_catalog == 'catalogos.campos'){
+                catalogosCampos =  objecto[index].catalogo;
+            }else if(value.name_catalog == 'catalogos.vegetacionpredominante'){
+                catalogosVegetacion =  objecto[index].catalogo;
             }
 
         });
