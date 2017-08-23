@@ -1888,7 +1888,7 @@ function getImagenFile(url,nombre) {
            
         },
         error: function(err) {
-             console.log(err);
+              console.log(err);
               alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');      
         }
 
