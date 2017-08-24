@@ -1242,7 +1242,7 @@ function plantillaImagenes(arr){
                      <td>:consecutivo:</td>
                      <td>:descripcion:</td>
                      <td>:fecha:</td>
-                     <td><a href="#" nombrearchivo=":nombreArchivo:" onclick="getImagen(this)">Ver Imagen</a></td>
+                     <td><a href="#" nombrearchivo=":nombreArchivo:" onclick="getImagen(event,this)">Ver Imagen</a></td>
                      <td>:campoAsociado:</td>
                      <td><button type="button" class="btn btn-default" data-consecutivo=":consecutivo:" data-folio=":folio:" data-info="Imagen" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
                   </tr>`;
@@ -1634,6 +1634,42 @@ function modalCatalogos(tituloModal, idCombo , arg , seleccionados, bloqueado){
     return modal;
 }
 
+  /**
+  * Carga modal con el archivo
+  * @param {String} nombreFile
+  * @param {String} contenedor
+  * @param {String} url 
+  * @description nombre del archivo que se encuentra en el servidor 
+  */
+
+  const cargaModalEnDOM = (nombreFile, contenedor, url) =>{
+    /**
+    * codigo html modal.
+    * @const {string}
+    */
+    const modal =  `<div class="modal fade" id="multiRegistroImagenesArchivo" role="dialog" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                      <h4 class="modal-title">Vista previa del archivo</h4>
+                    </div>
+                    <div class="modal-body">
+                        <iframe src="${url}?action=get&nombre_archivo=${nombreFile}#zoom=100" width="100%" height="400px">
+                      Este navegador no soporta iframe
+                  </iframe>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+
+    $(contenedor).html(modal);
+    $('#multiRegistroImagenesArchivo').modal('show')      
+  }
+
 
 
 
@@ -1858,42 +1894,14 @@ function getPredios(texto,accion,url) {
 }
 
 
-function getImagen(el){
+function getImagen(event, el){
+    event.preventDefault();
     let nombre= $(el).attr('nombrearchivo') || '';
 
-    (nombre != '')? getImagenFile(urlconexionArchivo,nombre) :  alertaError('Error al consultar imagen');
+    (nombre != '')? cargaModalEnDOM(nombre, '#multiRegistroDeImagenesDiv', urlconexionArchivo)  :  alertaError('Error al consultar imagen');
 }
 
 
-/**
- * @function getImagenFile
- * @param  {string} nombre - Nombre de la imagen
- * @param  {string} url - url del service 
- */
-function getImagenFile(url,nombre) { 
-    $.ajax({
-        type: 'POST',
-        url: url,
-        data: {action:'get',nombre_archivo:nombre},
-        dataType: 'json',
-        beforeSend: function (data) {
-        },
-        success: function(data){
-            console.log(data);
-            if(data.response.sucessfull){
-               
-            }else{
-                alertaError(data.response.message);
-            }
-           
-        },
-        error: function(err) {
-              console.log(err);
-              alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');      
-        }
-
-    }); 
-}
 
 
 /**
@@ -2358,7 +2366,7 @@ function insertMultiRegistroImagen(url, action, imagenes, tbody, flechaRegreso) 
                      <td>${datos.consecutivo}</td>
                      <td>${datos.descripcion}</td>
                      <td>${datos.fecha}</td>
-                     <td><a href="#" nombrearchivo="${datos.nombre_archivo}" onclick="getImagen(this)">Ver Imagen</a></td>
+                     <td><a href="#" nombrearchivo="${datos.nombre_archivo}" onclick="getImagen(event,this)">Ver Imagen</a></td>
                      <td>${datos.descripcion_campo}</td>
                      <td><button type="button" class="btn btn-default" data-consecutivo="${datos.consecutivo}" data-folio="${datos.folio}" data-info="Imagen" onclick="eliminaMultiRegistro(this)">Eliminar</button></td>
                 </tr>`;
