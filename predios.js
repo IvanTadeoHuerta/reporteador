@@ -10,7 +10,7 @@
   * @default
   */
   const url= 'http://localhost:8080/' ;
-
+  const url= 'http://187.188.96.133:8082/' ;
   /**
   * @constant
   * @type {string} urlConexionCatalogos 
@@ -3358,8 +3358,30 @@ function catalogos() {
 
 }
 
+$( document ).ajaxStart(function() {
+       $.blockUI({ 
+        message: '<h4>Por favor espere...</h4>',
+        css: { 
+            border: 'none', 
+            padding: '15px', 
+            backgroundColor: '#000', 
+            '-webkit-border-radius': '10px', 
+            '-moz-border-radius': '10px', 
+            opacity: .5,
+            color: '#fff' 
+        },
+         baseZ: 4000
+        }); 
+ 
+});
 
-  catalogos();
+
+
+$( document ).ajaxStop(function() {
+    $.unblockUI();
+});
+
+catalogos();
 
 
 
