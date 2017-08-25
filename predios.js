@@ -10,7 +10,7 @@
   * @default
   */
   const url= 'http://localhost:8080/' ;
-  const url= 'http://187.188.96.133:8082/' ;
+  //const url= 'http://187.188.96.133:8082/' ;
   /**
   * @constant
   * @type {string} urlConexionCatalogos 
@@ -21,6 +21,9 @@
   const urlConexionMultiRegistro =   url+'Probosque/MultiRegistro';
   const urlconexionArchivo =  url+'Probosque/Archivo';
   const urlConexionService =  url+'ServiceBosque/AuditoriasPreventivas';
+  const urlConexionServiceUpload =  url+'ServiceBosque/UploadShape';
+  const urlConexionHistorialAuditoria =  url+'ServiceBosque/AuditoriasPreventivas';
+
 
 
 
@@ -105,6 +108,30 @@
   * @default
   */
   const mensajeError =  $('#errormsgBusqueda');
+
+
+  /**
+  * @constant
+  * @type {object jquery} bodyModalHistorial
+  * @default
+  */
+  let bodyModalHistorial = $('#historial').find('.modal-body'); 
+
+  /**
+  * @constant
+  * @type {object jquery} etiquetaFolio
+  * @default
+  */
+  let etiquetaFolio = $('#historial').find('#etiquetaFolio');
+
+
+/**
+  * @constant
+  * @type {object jquery} modalHistorial
+  * @default
+  */
+  let modalHistorial = $('#historial');  
+
 
 /**
   * @constant
@@ -271,9 +298,11 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
     let botones='';
     let disabled='';
     let opcionEjecutar='';
+    let camposDeAuditoria='';
 
     switch(action){
         case 'add':
+            camposDeAuditoria=''
             opcionEjecutar = 'add';
             botones = `<button type="submit" class="btn btn-success btn-aceptar">Agregar predio</button>
                    <button type="button" class="btn btn-default btn-reset">Limpiar formulario</button>`;
@@ -281,6 +310,22 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
         case 'find':
             opcionEjecutar = 'update';
             disabled = 'disabled';
+
+            camposDeAuditoria=`<div class="row">
+                                    <br>
+                                    <div class="col-md-3 col-sm-12 col-xs-12" style="margin-top: 25px;">
+                                        <button type="button" data-info="${getTexto(data.folio)}" onclick="verHistoriaAuditoria(this)" class="btn btn-default btn-block" data-info="" style="font: icon;">
+                                           Ver historial de auditorias
+                                        </button>
+                                    </div>
+                                   
+                                    <div class="col-md-3 col-sm-12 col-xs-12" style="margin-top: 25px;">
+                                        <button type="button" data-folio="${getTexto(data.folio)}" onclick="importar(this)" class="btn btn-default btn-block" data-info="" style="font: icon;">
+                                            Importar shape
+                                        </button>
+                                    </div>
+                                </div>`;
+
             botones = `<button type="button" class="btn btn-default btn-delete">Eliminar</button>
                       <button type="submit"  class="btn btn-success btn-update">Actualizar</button>`;
           break;
@@ -443,6 +488,7 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
                         </select>
                     </div>
                 </div>
+                ${camposDeAuditoria}
                 <div class="row">
                     <br><br>
                     <div class="col-md-offset-5 col-sm-offset-5">
@@ -461,6 +507,9 @@ btnAccion.on('click', function(){
 
      (action == 'addPredio')? agregarPredio('Consultar un predio','findPredio'): buscarPredio('Agregar predio','addPredio');
 });
+
+
+
 
 
 
@@ -672,6 +721,73 @@ function eliminaElementoSeleccionado( arr, item ){
 };
 
 
+/*
+ * @function importar
+ * @param {Object jquery} el 
+ */
+function importar( el ){
+      let folio = $(el).attr('data-folio') || '';
+
+      const modal =  `<div class="modal fade" id="modalUpload" role="dialog" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog modal-sm">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal">&times;</button>
+                              <h4 class="modal-title text-center">Seleccione el archivo a importar para el predio ${folio}</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form id="formularioShape" onsubmit="return false" enctype="multipart/form-data">
+                                      <div class="form-group">
+                                        <input type="hidden" name="user" value="1">
+                                        <input type="hidden" name="layername" value="${folio}">
+                                        <input type="hidden" name="capa" value="LIMITES">
+                                        <input name="file" class="form-control" id="archivoShapeSelected" type="file" accept="application/zip,application/x-zip,application/x-zip-compressed">
+                                        <label style="color:red" id="mensajeError"></label>
+                                        <br>
+                                        <input type="button" class="btn btn-success btn-block" onclick="UploadShapeValida()" value="Submit">
+                                      </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Salir</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>`;
+
+    $('#uploadShapeDiv').html(modal);
+    $('#modalUpload').modal('show')    
+};
+
+
+/**
+ * @function UploadShapeValida
+ * @description Valida y envia datos para subir en el shape
+ */
+function UploadShapeValida() {
+    if ($('#archivoShapeSelected').val()) {
+        $('#mensajeError').html('');
+        let  formData = new FormData($('#formularioShape')[0]);
+        UploadShape(urlConexionServiceUpload,formData);
+    } else {
+        $('#mensajeError').html('Seleccione el archivo');
+    }
+}
+
+
+
+/*
+* @function verHistoriaAuditoria
+* @param {object} el - elemento del DOM
+* @description esta funcion determina que accion ejecutar
+*/
+function verHistoriaAuditoria(el) {
+
+   let folio = ($(el).attr('data-info')!='')? historialAuditoriaTecnica(urlConexionHistorialAuditoria,$(el).attr('data-info')) : alertaInfo('Seleccione predio');
+}  
+   
+
+
 /**
  * @function agregarPredio
  * @param {String} text - Texto del boton
@@ -802,15 +918,7 @@ function selectIdPredio(element) {
 }
 
 
-/**
- * @function pintaDatosEnFicha
- * @param  {JSON} datos - Contiene los datos de ubicacion del predio
- */
-function pintaDatosEnFicha(datos){
 
-
-
-}
 
 
 
@@ -1668,7 +1776,78 @@ function modalCatalogos(tituloModal, idCombo , arg , seleccionados, bloqueado){
 
     $(contenedor).html(modal);
     $('#multiRegistroImagenesArchivo').modal('show')      
-  }
+}
+
+/**
+ * @function stringCalendarioInput
+ * @param  {Date} fecha - fecha en que se necesita auditorias
+ * @param  {boolean} b - si necesita auditoria
+ * @param  {boolean} consecutivo 
+ * @return  {String} retorna un combo
+ */
+let stringCalendarioInput = (fecha = '', b = false, consecutivo ) =>{
+    //let disabled = (!b)? 'disabled': '';
+    let disabled = 'disabled';
+    let comboHtml = `<input type="text" class="form-control calendario conText${consecutivo}" id="calendario${consecutivo}" value="${fecha}" ${disabled}>`;
+    return comboHtml;
+}
+
+/**
+ * @function stringCombo
+ * @param  {boolean} param - si es auditoria
+ * @param  {number} consecutivo
+ * @return  {String} retorna un combo
+ */
+let stringCombo = (param, consecutivo) =>{
+    let option= (param == true)? `<option value="true" selected>SI</option><option value="false">NO</option>`:
+                                    `<option value="true">SI</option><option value="false" selected>NO</option>`;
+
+    let comboHtml = `<select class="form-control comboHistorial conCombo${consecutivo}" data-info="${consecutivo}" disabled>
+                        ${option}
+                    </select>`;
+    return comboHtml;
+}
+
+
+
+/**
+ * @function plantillaHistorial
+ * @param  {array} arr - Arreglo con objetos JSON
+ * @return  {String} retorna una tabla de historial con codigo html
+ */
+function plantillaHistorial(arr){
+    
+    let renglones = '';
+    let renglon = `<tr>
+                     <td>:consecutivo:</td>
+                     <td>:fecha:</td>
+                     <td>:auditoriaTecnica:</td>
+                  </tr>`;
+
+    arr.forEach(function(value){
+        renglones+= renglon.replace(/:consecutivo:/g,value.consecutivo).
+                            replace(/:folio:/g,value.idPredio).
+                            replace(':fecha:',stringCalendarioInput(value.fechaATP.trim().replace('00:00:00',''),value.auditoriaTecnica,value.consecutivo)).
+                            replace(':auditoriaTecnica:',stringCombo(value.auditoriaTecnica,value.consecutivo));
+    });
+
+    renglones= (renglones == '')? `<tr><td colspan="3"><center>No hay auditorias registradas</center></td></tr>`: renglones;
+    let html = `<div class="table-responsive table-striped table-bordered table-hover">
+                    <table class="table">
+                        <thead>
+                          <tr>
+                            <th>Consecutivo</th>
+                            <th>Fecha</th>
+                            <th>Auditoría técnica</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                            ${renglones}
+                        </tbody>
+                    </table>
+                </div>`;
+    return html;
+}
 
 
 
@@ -1899,6 +2078,39 @@ function getImagen(event, el){
     let nombre= $(el).attr('nombrearchivo') || '';
 
     (nombre != '')? cargaModalEnDOM(nombre, '#multiRegistroDeImagenesDiv', urlconexionArchivo)  :  alertaError('Error al consultar imagen');
+}
+
+
+/**
+ * @function historialAuditoriaTecnica
+ * @param  {string} folio - folio del predio
+ * @param  {string} url - url del service 
+ */
+function historialAuditoriaTecnica(url,folio) { 
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: {action:'historialAuditoriaTecnica',idPredio:folio},
+        dataType: 'json',
+        beforeSend: function (data) {
+        },
+        success: function(data){
+            etiquetaFolio.html('');
+            if(data.response.sucessfull){
+               etiquetaFolio.html('Predio: '+folio);
+               bodyModalHistorial.html(plantillaHistorial(data.data));
+               modalHistorial.modal('show');
+            }else{
+                alertaError(data.response.message);
+            }
+           
+        },
+        error: function(err) {
+            etiquetaFolio.html('');
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');         
+        }
+
+    }); 
 }
 
 
@@ -2323,6 +2535,41 @@ function insertMultiRegistroRepresentante(url, action, representante, tbody, fle
     });
 }
 
+
+/**
+ * @function UploadShape
+ * @param  {string} url - url del service 
+ * @param  {object DOM} formulario - formulario
+ *
+ */
+function UploadShape(url, formulario) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: formulario,
+        enctype: 'multipart/form-data',
+        async: false,
+        cache: false,
+        contentType: false,
+        processData: false,
+        dataType: 'json',
+        beforeSend: function(data) {},
+        success: function(data) {
+            console.log('???')
+            console.log(data);
+            if (data.response.sucessfull) {
+                alertaExito(data.response.message);
+            } else {
+                alertaError(data.response.message);
+            }
+
+        },
+        error: function(err) {
+            alertaError('Vuelva a intentarlo. Si el problema continúa contacte con soporte');
+        }
+
+    });
+}
 
 
 /**
