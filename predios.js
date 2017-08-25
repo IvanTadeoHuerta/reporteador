@@ -1613,7 +1613,7 @@ function plantillaDetalleImagen(element , arregloCampos){
 
                                      <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Archivo</label>
-                                        <input type="file" name="file" class="form-control">
+                                        <input type="file" name="file" accept="application/pdf, image/*" class="form-control">
                                         <input type="hidden" value="insertMultiregistroImagen" name="action">
                                     </div>
                                 </div>
@@ -3117,19 +3117,19 @@ function validaFormularioPoligono(element) {
             },
 
             superficie_poligono: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficie_cartografica: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficie_arbolada: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficie_otros_usos: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             tipo_fisiografia: {
@@ -3402,19 +3402,19 @@ function validaFormulario(element) {
             },
 
             superficieTotal: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficieCartografica: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficieArbolada: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             superficieOtrosUsos: {
-                decimales: 'Ingrese formato correcto 0.00'
+                decimales: 'Ingrese formato correcto 0.000'
             },
 
             estatusPredio: {
@@ -3555,7 +3555,7 @@ jQuery.validator.addMethod("empty",
 
 jQuery.validator.addMethod("decimales",
     function(value, element) {
-        return this.optional(element) || /^[0-9]{1,9}(\.[0-9]{2})+$/.test(value);
+        return this.optional(element) || /^[0-9]{1,9}(\.[0-9]{3})+$/.test(value);
     }
 );
 
