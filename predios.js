@@ -1,6 +1,7 @@
 /**
  * @fileoverview predios.js  Este archivo contiene las funciones correspondientes al modulo de predios 
  * @author Ivan Tadeo Huerta <ivantec5sem@gmail.com>
+ * @version 1.1.2
  *
  */
 
@@ -10,7 +11,7 @@
   * @default
   */
   const url= 'http://localhost:8080/' ;
-  //const url= 'http://187.188.96.133:8082/' ;
+  //const url= 'http://187.188.96.133:8080/' ;
   /**
   * @constant
   * @type {string} urlConexionCatalogos 
@@ -314,13 +315,13 @@ var htmlFicha = (data, action,cRegiones,cMunicipio,cLocalidades,cTipoTenencia,cE
             camposDeAuditoria=`<div class="row">
                                     <br>
                                     <div class="col-md-3 col-sm-12 col-xs-12" style="margin-top: 25px;">
-                                        <button type="button" data-info="${getTexto(data.folio)}" onclick="verHistoriaAuditoria(this)" class="btn btn-default btn-block" data-info="" style="font: icon;">
+                                        <button type="button" data-info="${getTexto(data.folio)}" onclick="verHistoriaAuditoria(this)" class="btn btn-success btn-block" data-info="" style="font: icon;">
                                            Ver historial de auditorias
                                         </button>
                                     </div>
                                    
                                     <div class="col-md-3 col-sm-12 col-xs-12" style="margin-top: 25px;">
-                                        <button type="button" data-folio="${getTexto(data.folio)}" onclick="importar(this)" class="btn btn-default btn-block" data-info="" style="font: icon;">
+                                        <button type="button" data-folio="${getTexto(data.folio)}" onclick="importar(this)" class="btn btn-success btn-block" data-info="" style="font: icon;">
                                             Importar shape
                                         </button>
                                     </div>
@@ -741,10 +742,10 @@ function importar( el ){
                                         <input type="hidden" name="user" value="1">
                                         <input type="hidden" name="layername" value="${folio}">
                                         <input type="hidden" name="capa" value="LIMITES">
-                                        <input name="file" class="form-control" id="archivoShapeSelected" type="file" accept="application/zip,application/x-zip,application/x-zip-compressed">
+                                        <input name="file" class="form-control" id="archivoShapeSelected" type="file" accept=".zip,application/octet-stream,application/zip,application/x-zip,application/x-zip-compressed">
                                         <label style="color:red" id="mensajeError"></label>
                                         <br>
-                                        <input type="button" class="btn btn-success btn-block" onclick="UploadShapeValida()" value="Submit">
+                                        <input type="button" class="btn btn-success btn-block" onclick="UploadShapeValida()" value="Cargar">
                                       </div>
                                 </form>
                             </div>
@@ -3117,19 +3118,19 @@ function validaFormularioPoligono(element) {
             },
 
             superficie_poligono: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficie_cartografica: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficie_arbolada: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficie_otros_usos: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             tipo_fisiografia: {
@@ -3402,19 +3403,19 @@ function validaFormulario(element) {
             },
 
             superficieTotal: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficieCartografica: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficieArbolada: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             superficieOtrosUsos: {
-                decimales: 'Ingrese formato correcto 0.000'
+                decimales: 'Max. 9 enteros con 3 decimales'
             },
 
             estatusPredio: {
