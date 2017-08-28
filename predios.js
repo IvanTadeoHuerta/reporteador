@@ -1,7 +1,7 @@
 /**
  * @fileoverview predios.js  Este archivo contiene las funciones correspondientes al modulo de predios 
  * @author Ivan Tadeo Huerta <ivantec5sem@gmail.com>
- * @version 1.1.2
+ * @version 1.2.0
  *
  */
 
@@ -10,8 +10,8 @@
   * @type {string} url
   * @default
   */
-  const url= 'http://localhost:8080/' ;
-  //const url= 'http://187.188.96.133:8080/' ;
+  const url = 'http://localhost:8080/';
+  //const url= 'http://187.188.96.133:8082/' ;
   /**
   * @constant
   * @type {string} urlConexionCatalogos 
@@ -260,6 +260,18 @@
   * @type {array} catalogosVegetacion 
   */
   var catalogosVegetacion
+
+   /**
+   * Propiedades que tendra la ventana Popup.
+   * @const {string} caracteristicas
+   */
+   const caracteristicas = "height="+(parseInt(screen.height)-100)+",width="+(parseInt(screen.width)-100)+",scrollTo,resizable=0,scrollbars=1,location=0";                              
+   
+   /**
+   * Construye y abre  una ventana 
+   * @returns {object}
+   */                              
+   const  openWindows = ()=> window.open('http://localhost:800/SIFEM/toolMaps/poligonos.html', 'Popup', caracteristicas);
 
 
 /**
@@ -2556,9 +2568,10 @@ function UploadShape(url, formulario) {
         dataType: 'json',
         beforeSend: function(data) {},
         success: function(data) {
-            console.log('???')
-            console.log(data);
+        
             if (data.response.sucessfull) {
+                amplify.store('poligonosTmp', data.data);
+                openWindows();
                 alertaExito(data.response.message);
             } else {
                 alertaError(data.response.message);
