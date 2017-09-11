@@ -1,7 +1,7 @@
 /**
  * @fileoverview predios.js  Este archivo contiene las funciones correspondientes al modulo de predios 
  * @author Ivan Tadeo Huerta <ivantec5sem@gmail.com>
- * @version 1.2.0
+ * @version 1.2.2
  *
  */
 
@@ -10,8 +10,8 @@
   * @type {string} url
   * @default
   */
-  const url = 'http://localhost:8080/';
-  //const url= 'http://187.188.96.133:8082/' ;
+
+  const url= 'http://localhost:8080/' ;
   /**
   * @constant
   * @type {string} urlConexionCatalogos 
@@ -271,7 +271,7 @@
    * Construye y abre  una ventana 
    * @returns {object}
    */                              
-   const  openWindows = ()=> window.open('http://localhost:800/SIFEM/toolMaps/poligonos.html', 'Popup', caracteristicas);
+   const  openWindows = ()=> window.open('http://187.188.96.133:888/SIFEM/toolMaps/poligonos.html', 'Popup', caracteristicas);
 
 
 /**
@@ -674,6 +674,10 @@ addOptionMultiRegistro.on('click', function() {
     }
 });
 
+modal.on('blur','.inputFecha', function(e){
+  if($(e.target).length > 0 && typeof($(e.target).data('daterangepicker')) == 'object') $(e.target).data('daterangepicker').remove();
+})
+
 /**
  * @function getTexto
  * @param {String} dato - Campo de la cadena JSON 
@@ -930,24 +934,40 @@ function selectIdPredio(element) {
     }
 }
 
-
-
+/**
+ * @function removeCalendario
+ * @param  {object jquery} element - Objecto DOM 
+ * @description  Elimina plugin del calendario y resetea la fecha
+ */
+function removeCalendario(element){
+  let inputClass = $(element).attr('data') || '' ;
+  $('.'+inputClass).val('');
+  if($('.'+inputClass).length > 0 && typeof($('.'+inputClass).data('daterangepicker')) == 'object') $('.'+inputClass).data('daterangepicker').remove();
+  $('#r'+inputClass).show();
+  $('#s'+inputClass).show();
+}
 
 
 
 /**
  * @function agregaCalendario
  * @param  {object jquery} element - Objecto DOM 
+ * @param   event - evento
  * @param  {String} drops - como se mostrara el calendario
  * @param  {String} idElement - identificador de la caja de texto
  */
-function agregaCalendario(element, drops='up') {
-    if($(element).length > 0 && typeof($(element).data('daterangepicker')) == 'object') $(element).data('daterangepicker').remove();
-    $(element).daterangepicker({
-        singleDatePicker: true,
-        autoUpdateInput: false,
-        showDropdowns: true,
+function agregaCalendario(element, event ,drops='down') {
 
+     
+     let input = $(element).attr('data')
+     let fecha = ($('.'+input).val() == '') ? fecha_hoy() : $('.'+input).val();
+    
+    if($('.'+input).length > 0 && typeof($('.'+input).data('daterangepicker')) == 'object') $('.'+input).data('daterangepicker').remove();
+    
+    $('.'+input).daterangepicker({
+        singleDatePicker: true,
+        autoUpdateInput: true,
+        showDropdowns: true,
         drops: drops,
         locale: {
             format: "DD/MM/YYYY",
@@ -976,12 +996,14 @@ function agregaCalendario(element, drops='up') {
                 "Diciembre"
             ]
 
-        }
+        }, startDate: fecha
 
     }, function(chosen_date) {
-        let selectorId= this.element.context.id;
-        $(element).val(chosen_date.format('DD-MM-YYYY'));
+        $('.'+input).val(chosen_date.format('DD-MM-YYYY'));
+        
     });
+
+    $('.'+input).focus();
 }
 
 
@@ -1090,9 +1112,6 @@ function mostrarDetallePoligono(element){
     addOptionMultiRegistro.hide();    
     multiRegistros.hide();
     detalleMultiRegistro.show();
-    agregaCalendario('.fechaPublicacionDof','down');
-    agregaCalendario('.fechaResolucionPresidencial');
-    agregaCalendario('.fechaAsambleaProcede');
     validaFormularioPoligono('#formularioPoligono');
 }
 
@@ -1132,7 +1151,6 @@ function plantillaDetallePoligono(element, cVegetacion, cEspecies, cClima){
     }
 
     
-    
     let formulario =`<form id="formularioPoligono" onsubmit="return false" autocomplete="off" data-action="${opcionEjecutar}">
                         <div class="form-group" ${display}>
                             <div class="row">
@@ -1157,7 +1175,16 @@ function plantillaDetallePoligono(element, cVegetacion, cEspecies, cClima){
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de publicación en el DOF</label>
-                                    <input type="text" class="form-control fechaPublicacionDof" name="fecha_publicacion_dof" value="${getTexto(self.fecha_publicacion_dof)}">
+                                    <div class="input-group">
+                                         <input type="text" class="form-control fechaPublicacionDof inputFecha" name="fecha_publicacion_dof" value="${getTexto(self.fecha_publicacion_dof)}" style="background-color: white" readonly>
+                                         <span class="input-group-addon" id="rfechaPublicacionDof" data="fechaPublicacionDof" onclick="removeCalendario(this)">
+                                                      <i class="glyphicon glyphicon-remove"></i>
+                                         </span>
+                                         <span class="input-group-addon" id="sfechaPublicacionDof"  data="fechaPublicacionDof"  onclick="agregaCalendario(this)">
+                                               <i class="glyphicon glyphicon-th">
+                                               </i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>  
@@ -1166,12 +1193,30 @@ function plantillaDetallePoligono(element, cVegetacion, cEspecies, cClima){
                             <div class="row">
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de resolución presidencial</label>
-                                    <input type="text" class="form-control fechaResolucionPresidencial" name="fecha_resolucion_presidencial" value="${getTexto(self.fecha_resolucion_presidencial)}">
+                                     <div class="input-group">
+                                        <input type="text" class="form-control fechaResolucionPresidencial inputFecha" name="fecha_resolucion_presidencial" value="${getTexto(self.fecha_resolucion_presidencial)}"  style="background-color: white"  readonly>
+                                         <span class="input-group-addon" id="rfechaResolucionPresidencial" data="fechaResolucionPresidencial" onclick="removeCalendario(this)">
+                                                          <i class="glyphicon glyphicon-remove"></i>
+                                          </span>
+                                          <span class="input-group-addon" id="sfechaResolucionPresidencial"  data="fechaResolucionPresidencial"  onclick="agregaCalendario(this)">
+                                                   <i class="glyphicon glyphicon-th">
+                                                   </i>
+                                          </span>
+                                      </div>
                                 </div>
 
                                 <div class="col-md-6 col-sm-6 col-xs-12">
                                     <label>Fecha de asamblea de procede</label>
-                                    <input type="text" class="form-control fechaAsambleaProcede" name="fecha_asamblea_procede" value="${getTexto(self.fecha_asamblea_procede)}">
+                                    <div class="input-group">
+                                      <input type="text" class="form-control fechaAsambleaProcede inputFecha" name="fecha_asamblea_procede" value="${getTexto(self.fecha_asamblea_procede)}"  style="background-color: white" readonly>
+                                       <span class="input-group-addon" id="rfechaAsambleaProcede" data="fechaAsambleaProcede" onclick="removeCalendario(this)">
+                                                        <i class="glyphicon glyphicon-remove"></i>
+                                           </span>
+                                           <span class="input-group-addon" id="sfechaAsambleaProcede"  data="fechaAsambleaProcede"  onclick="agregaCalendario(this)">
+                                                 <i class="glyphicon glyphicon-th">
+                                                 </i>
+                                          </span>
+                                    </div>
                                 </div>
                             </div>
                         </div> 
@@ -1411,7 +1456,7 @@ function mostrarDetalleImagen(element) {
     multiRegistros.hide();
     detalleMultiRegistro.show();
 
-    agregaCalendario('.fechaImagen','down');
+    
     validarFormularioImagen('#formularioImagen');
 }
 
@@ -1429,8 +1474,6 @@ function mostrarDetallePropietario(element) {
     flechaRegreso.show();
     multiRegistros.hide();
     detalleMultiRegistro.show();
-    agregaCalendario('.fechaInicioPeriodo');
-    agregaCalendario('.fechaFinPeriodo');
     validaFormularioRepresentante('#formularioRepresentante');
 
 }
@@ -1516,12 +1559,30 @@ function plantillaDetalleRepresentante(element){
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Inicio del periodo</label>
-                                <input type="text"  class="form-control fechaInicioPeriodo" name="inicio_periodo" value="${getTexto(self.inicio_periodo)}">
+                                 <div class="input-group">
+                                    <input type="text"  class="form-control fechaInicioPeriodo inputFecha" name="inicio_periodo" value="${getTexto(self.inicio_periodo)}" style="background-color: white" readonly>
+                                    <span class="input-group-addon" id="rfechaInicioPeriodo" data="fechaInicioPeriodo" onclick="removeCalendario(this)">
+                                      <i class="glyphicon glyphicon-remove"></i>
+                                      </span>
+                                      <span class="input-group-addon" id="sfechaInicioPeriodo"  data="fechaInicioPeriodo"  onclick="agregaCalendario(this)">
+                                            <i class="glyphicon glyphicon-th">
+                                            </i>
+                                      </span>
+                                 </diV>
                             </div>
 
                             <div class="col-md-6 col-sm-6 col-xs-12">
                                 <label>Fin del periodo</label>
-                                <input type="text" class="form-control fechaFinPeriodo" name="fin_periodo" value="${getTexto(self.fin_periodo)}">
+                                <div class="input-group">
+                                  <input type="text" class="form-control fechaFinPeriodo inputFecha" name="fin_periodo" value="${getTexto(self.fin_periodo)}" style="background-color: white" readonly>
+                                   <span class="input-group-addon" id="rfechaFinPeriodo" data="fechaFinPeriodo" onclick="removeCalendario(this)">
+                                          <i class="glyphicon glyphicon-remove"></i>
+                                   </span>
+                                    <span class="input-group-addon" id="sfechaFinPeriodo"  data="fechaFinPeriodo"  onclick="agregaCalendario(this)">
+                                          <i class="glyphicon glyphicon-th">
+                                                     </i>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div> 
@@ -1610,7 +1671,16 @@ function plantillaDetalleImagen(element , arregloCampos){
                                     </div>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <label>Fecha</label>
-                                        <input type="text" name="fecha" value="${getTexto(self.fecha)}" class="form-control fechaImagen">
+                                        <div class="input-group">
+                                            <input type="text" name="fecha" value="${getTexto(self.fecha)}" class="form-control fechaImagen inputFecha"  style="background-color: white" readonly>
+                                            <span class="input-group-addon" id="rfechaImagen" data="fechaImagen" onclick="removeCalendario(this)">
+                                                          <i class="glyphicon glyphicon-remove"></i>
+                                             </span>
+                                             <span class="input-group-addon" id="sfechaImagen"  data="fechaImagen"  onclick="agregaCalendario(this)">
+                                                   <i class="glyphicon glyphicon-th">
+                                                   </i>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3552,7 +3622,7 @@ jQuery.validator.addMethod("valueNotEquals",
 
 jQuery.validator.addMethod("numeros",
     function(value, element) {
-        return this.optional(element) || /^[0-9]+$/.test(value);
+        return this.optional(element) || /^[0-9]+$/.test(value.trim());
     });
 
 jQuery.validator.addMethod("empty",
@@ -3569,7 +3639,7 @@ jQuery.validator.addMethod("empty",
 
 jQuery.validator.addMethod("decimales",
     function(value, element) {
-        return this.optional(element) || /^[0-9]{1,9}(\.[0-9]{3})+$/.test(value);
+        return this.optional(element) || /^[0-9]{1,9}(\.[0-9]{3})+$/.test(value.trim());
     }
 );
 
